@@ -4,7 +4,8 @@ import {
   isValidPosition,
   centerOf,
   FLOOR_REGION,
-  WALL_REGION,
+  WALL_FACE_REGIONS,
+  WALL_FACES,
   FLOOR_ROWS,
   FLOOR_COLS,
   WALL_ROWS,
@@ -15,6 +16,7 @@ import {
   wallPosition,
   isValidFloorPosition,
   isValidWallPosition,
+  isValidWallFace,
   isAgainstWall,
   createGridCellRect,
   floorCellRect,
@@ -22,6 +24,7 @@ import {
   isInHangableWallZone,
   WALL_HANGABLE_ROWS,
   WALL_KICKBOARD_ROWS,
+  getFootprintScreenRect,
 } from './roomGrid.js';
 
 describe('createGridProjection', () => {
@@ -42,10 +45,12 @@ describe('createGridProjection', () => {
 });
 
 describe('floorPosition / wallPosition', () => {
-  it('keeps the floor grid below the wall region, never overlapping it', () => {
+  it('keeps the floor grid below both wall faces, never overlapping them', () => {
     const topLeftOfFloor = floorPosition({ row: 0, col: 0 });
-    const bottomOfWall = wallPosition({ row: WALL_ROWS - 1, col: 0 });
-    expect(topLeftOfFloor.yPercent).toBeGreaterThan(bottomOfWall.yPercent);
+    const bottomOfLeftWall = wallPosition({ face: 'left', row: WALL_ROWS - 1, col: 0 });
+    const bottomOfRightWall = wallPosition({ face: 'right', row: WALL_ROWS - 1, col: 0 });
+    expect(topLeftOfFloor.yPercent).toBeGreaterThan(bottomOfLeftWall.yPercent);
+    expect(topLeftOfFloor.yPercent).toBeGreaterThan(bottomOfRightWall.yPercent);
   });
 
   it('centers the default cat position within the floor grid bounds', () => {
@@ -54,6 +59,13 @@ describe('floorPosition / wallPosition', () => {
     expect(xPercent).toBeLessThan(100);
     expect(yPercent).toBeGreaterThan(FLOOR_REGION.top * 100);
     expect(yPercent).toBeLessThan(100);
+  });
+
+  it('places the left face entirely left of the right face, meeting at the center', () => {
+    const leftFar = wallPosition({ face: 'left', row: 0, col: WALL_COLS - 1 });
+    const rightNear = wallPosition({ face: 'right', row: 0, col: 0 });
+    expect(leftFar.xPercent).toBeLessThan(50);
+    expect(rightNear.xPercent).toBeGreaterThan(50);
   });
 });
 
@@ -66,11 +78,25 @@ describe('isValidPosition / isValidFloorPosition / isValidWallPosition', () => {
     expect(isValidPosition({ row: 1.5, col: 0 }, { rows: 8, cols: 8 })).toBe(false);
   });
 
-  it('validates against the real floor and wall region sizes', () => {
+  it('validates against the real floor size', () => {
     expect(isValidFloorPosition({ row: FLOOR_ROWS - 1, col: FLOOR_COLS - 1 })).toBe(true);
     expect(isValidFloorPosition({ row: FLOOR_ROWS, col: 0 })).toBe(false);
-    expect(isValidWallPosition({ row: WALL_ROWS - 1, col: WALL_COLS - 1 })).toBe(true);
-    expect(isValidWallPosition({ row: WALL_ROWS, col: 0 })).toBe(false);
+  });
+
+  it('validates wall positions against both bounds and a real face name', () => {
+    expect(isValidWallPosition({ face: 'left', row: WALL_ROWS - 1, col: WALL_COLS - 1 })).toBe(true);
+    expect(isValidWallPosition({ face: 'right', row: WALL_ROWS - 1, col: WALL_COLS - 1 })).toBe(true);
+    expect(isValidWallPosition({ face: 'left', row: WALL_ROWS, col: 0 })).toBe(false);
+    expect(isValidWallPosition({ face: 'up', row: 0, col: 0 })).toBe(false);
+  });
+});
+
+describe('isValidWallFace / WALL_FACES', () => {
+  it('recognizes exactly left and right as valid faces', () => {
+    expect(WALL_FACES).toEqual(['left', 'right']);
+    expect(isValidWallFace('left')).toBe(true);
+    expect(isValidWallFace('right')).toBe(true);
+    expect(isValidWallFace('front')).toBe(false);
   });
 });
 
@@ -84,7 +110,7 @@ describe('isAgainstWall', () => {
 });
 
 describe('isInHangableWallZone', () => {
-  it('is true for the top (hangable) rows and false for the bottom kickboard rows', () => {
+  it('is true for the top (hangable) rows and false for the bottom kickboard rows, on either face', () => {
     expect(isInHangableWallZone({ row: 0 })).toBe(true);
     expect(isInHangableWallZone({ row: WALL_HANGABLE_ROWS - 1 })).toBe(true);
     expect(isInHangableWallZone({ row: WALL_HANGABLE_ROWS })).toBe(false);
@@ -111,10 +137,47 @@ describe('createGridCellRect', () => {
     expect(rect.topPercent + rect.heightPercent / 2).toBeCloseTo(center.yPercent, 10);
   });
 
-  it('sizes wall cells using the wall region dimensions, not the floor\'s', () => {
-    const rect = wallCellRect({ row: 0, col: 0 });
-    expect(rect.widthPercent).toBeCloseTo((WALL_REGION.width / WALL_COLS) * 100, 10);
-    expect(rect.heightPercent).toBeCloseTo((WALL_REGION.height / WALL_ROWS) * 100, 10);
+  it('sizes wall cells using a single face\'s region dimensions, not the floor\'s', () => {
+    const rect = wallCellRect({ face: 'left', row: 0, col: 0 });
+    expect(rect.widthPercent).toBeCloseTo((WALL_FACE_REGIONS.left.width / WALL_COLS) * 100, 10);
+    expect(rect.heightPercent).toBeCloseTo((WALL_FACE_REGIONS.left.height / WALL_ROWS) * 100, 10);
+  });
+
+  it('gives the two faces the same shape but different screen positions', () => {
+    const left = wallCellRect({ face: 'left', row: 2, col: 3 });
+    const right = wallCellRect({ face: 'right', row: 2, col: 3 });
+    expect(left.widthPercent).toBeCloseTo(right.widthPercent, 10);
+    expect(left.heightPercent).toBeCloseTo(right.heightPercent, 10);
+    expect(left.leftPercent).not.toBeCloseTo(right.leftPercent, 5);
+  });
+});
+
+describe('getFootprintScreenRect', () => {
+  it('matches a single cell\'s own rect for a 1x1 footprint', () => {
+    const rect = getFootprintScreenRect(floorCellRect, { row: 2, col: 3 }, { width: 1, height: 1 });
+    expect(rect).toEqual(floorCellRect({ row: 2, col: 3 }));
+  });
+
+  it('spans from the anchor\'s top-left to the far cell\'s bottom-right for a multi-tile footprint', () => {
+    const anchorRect = floorCellRect({ row: 2, col: 3 });
+    const farRect = floorCellRect({ row: 3, col: 4 }); // anchor + (2x2 - 1) in both dims
+    const rect = getFootprintScreenRect(floorCellRect, { row: 2, col: 3 }, { width: 2, height: 2 });
+
+    expect(rect.leftPercent).toBeCloseTo(anchorRect.leftPercent, 10);
+    expect(rect.topPercent).toBeCloseTo(anchorRect.topPercent, 10);
+    expect(rect.widthPercent).toBeCloseTo(farRect.leftPercent + farRect.widthPercent - anchorRect.leftPercent, 10);
+    expect(rect.heightPercent).toBeCloseTo(farRect.topPercent + farRect.heightPercent - anchorRect.topPercent, 10);
+    // Sanity check against the plain single-cell width/height: a 2x2
+    // footprint should measure out to exactly twice one cell's size.
+    expect(rect.widthPercent).toBeCloseTo(anchorRect.widthPercent * 2, 10);
+    expect(rect.heightPercent).toBeCloseTo(anchorRect.heightPercent * 2, 10);
+  });
+
+  it('works with a face-bound wall cell rect function for a wide wall footprint', () => {
+    const rect = getFootprintScreenRect(wallCellRect, { face: 'left', row: 0, col: 0 }, { width: 4, height: 1 });
+    const singleCell = wallCellRect({ face: 'left', row: 0, col: 0 });
+    expect(rect.widthPercent).toBeCloseTo(singleCell.widthPercent * 4, 10);
+    expect(rect.heightPercent).toBeCloseTo(singleCell.heightPercent, 10);
   });
 });
 

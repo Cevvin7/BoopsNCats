@@ -1,10 +1,11 @@
 import { CatSprite } from '../cat/CatSprite.jsx';
 import { PlacedItemSprite } from '../inventory/PlacedItemSprite.jsx';
 import { ItemActionPopup } from '../inventory/ItemActionPopup.jsx';
-import { ITEM_CATALOG } from '../inventory/itemCatalog.js';
+import { ITEM_CATALOG, getFootprint } from '../inventory/itemCatalog.js';
 import { regionForPlacementType } from '../inventory/placement.js';
+import { getPlacedFace } from '../inventory/placedItemsModel.js';
 import { TileGridOverlay } from './TileGridOverlay.jsx';
-import { FLOOR_COLS, WALL_COLS, DEFAULT_CAT_POSITION, floorPosition, wallPosition } from './roomGrid.js';
+import { DEFAULT_CAT_POSITION, floorCellRect, wallCellRect, getFootprintScreenRect } from './roomGrid.js';
 import './Room.css';
 
 const FLOOR_ART_URL = '/sprites/room/TestFloor1.png';
@@ -14,32 +15,35 @@ const WALL_ART_URL = '/sprites/room/TestWalls1.png';
 // backgrounds, so stacking them at identical size/position composites them
 // into one room — no separate wall/floor rectangles to size independently
 // the way the placeholder divs needed. The floor/wall *grid* (rows, cols,
-// and the coordinate projection used to place the cat below) is untouched
-// in roomGrid.js; only how the room is drawn changed.
+// and the coordinate projection used to place entities below) is
+// untouched in roomGrid.js; only how the room is drawn changed.
 const ROOM_ART_ASPECT_RATIO = 512 / 448;
 
-// A floor-region item is sized to one floor cell's width, a wall-region
-// item to one wall cell's width — the two grids have different column
-// counts (8 vs 5), so they need different width fractions.
-function projectAndSize(placementType, position) {
-  const region = regionForPlacementType(placementType);
+// Every entity (cat, placed items) is rendered as a top-left + width +
+// height box spanning its full footprint, rather than a single centered
+// point — a 4x1 shelf and a 1x1 plant both need their real footprint's
+// bounding box, not just an anchor tile's center.
+function screenRectForPlacedItem(placedItem) {
+  const catalogEntry = ITEM_CATALOG[placedItem.itemId];
+  const footprint = getFootprint(catalogEntry);
+  const region = regionForPlacementType(catalogEntry.placementType);
+
   if (region === 'wall') {
-    return { ...wallPosition(position), widthPercent: (1 / WALL_COLS) * 100 };
+    const anchor = { face: getPlacedFace(placedItem), row: placedItem.row, col: placedItem.col };
+    return getFootprintScreenRect(wallCellRect, anchor, footprint);
   }
-  return { ...floorPosition(position), widthPercent: (1 / FLOOR_COLS) * 100 };
+  return getFootprintScreenRect(floorCellRect, placedItem, footprint);
 }
 
 export function Room({ catHappiness, catNeedsAttention, placedItems, editMode, roomEditor }) {
-  const catScreenPosition = floorPosition(DEFAULT_CAT_POSITION);
+  const catScreenRect = getFootprintScreenRect(floorCellRect, DEFAULT_CAT_POSITION, { width: 1, height: 1 });
 
   const activeRegion = roomEditor.activePlacementType
     ? regionForPlacementType(roomEditor.activePlacementType)
     : null;
 
   const menuItem = roomEditor.menuPlacedItem;
-  const menuScreenPosition = menuItem
-    ? projectAndSize(ITEM_CATALOG[menuItem.itemId].placementType, menuItem)
-    : null;
+  const menuScreenRect = menuItem ? screenRectForPlacedItem(menuItem) : null;
 
   return (
     <div className="room" style={{ aspectRatio: ROOM_ART_ASPECT_RATIO }}>
@@ -50,25 +54,26 @@ export function Room({ catHappiness, catNeedsAttention, placedItems, editMode, r
         <div
           className="room-entity"
           style={{
-            left: `${catScreenPosition.xPercent}%`,
-            top: `${catScreenPosition.yPercent}%`,
-            width: `${(1 / FLOOR_COLS) * 100}%`,
+            left: `${catScreenRect.leftPercent}%`,
+            top: `${catScreenRect.topPercent}%`,
+            width: `${catScreenRect.widthPercent}%`,
+            height: `${catScreenRect.heightPercent}%`,
           }}
         >
           <CatSprite happiness={catHappiness} needsAttention={catNeedsAttention} />
         </div>
 
         {placedItems.map((item) => {
-          const catalogEntry = ITEM_CATALOG[item.itemId];
-          const screenPosition = projectAndSize(catalogEntry.placementType, item);
+          const rect = screenRectForPlacedItem(item);
           return (
             <div
               key={item.id}
               className="room-entity"
               style={{
-                left: `${screenPosition.xPercent}%`,
-                top: `${screenPosition.yPercent}%`,
-                width: `${screenPosition.widthPercent}%`,
+                left: `${rect.leftPercent}%`,
+                top: `${rect.topPercent}%`,
+                width: `${rect.widthPercent}%`,
+                height: `${rect.heightPercent}%`,
               }}
             >
               <PlacedItemSprite
@@ -84,14 +89,15 @@ export function Room({ catHappiness, catNeedsAttention, placedItems, editMode, r
         <TileGridOverlay
           positions={roomEditor.highlightedPositions}
           region={activeRegion}
+          footprint={roomEditor.activeFootprint}
           onTapTile={roomEditor.tapTile}
         />
       )}
 
-      {editMode && menuItem && menuScreenPosition && (
+      {editMode && menuItem && menuScreenRect && (
         <ItemActionPopup
-          xPercent={menuScreenPosition.xPercent}
-          yPercent={menuScreenPosition.yPercent}
+          xPercent={menuScreenRect.leftPercent + menuScreenRect.widthPercent / 2}
+          yPercent={menuScreenRect.topPercent}
           onMove={roomEditor.startMove}
           onFlip={roomEditor.flip}
           onDelete={roomEditor.remove}

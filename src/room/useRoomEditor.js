@@ -1,5 +1,5 @@
 import { useReducer, useCallback, useMemo } from 'react';
-import { ITEM_CATALOG } from '../inventory/itemCatalog.js';
+import { ITEM_CATALOG, getFootprint } from '../inventory/itemCatalog.js';
 import { getValidPositions } from '../inventory/placement.js';
 import { findPlacedItem } from '../inventory/placedItemsModel.js';
 
@@ -37,25 +37,31 @@ function reducer(state, action) {
 export function useRoomEditor({ placedItems, placeItem, movePlacedItem, flipPlacedItem, deletePlacedItem }) {
   const [state, dispatch] = useReducer(reducer, initialState);
 
-  const activePlacementType = useMemo(() => {
+  // The catalog entry currently driving tile selection — either the
+  // selected inventory item (PLACING) or the item being relocated
+  // (MOVING). Both placementType and footprint come from the same
+  // lookup, so they're derived together to avoid finding it twice.
+  const activeItemConfig = useMemo(() => {
+    let catalogEntry = null;
     if (state.mode === EditorMode.PLACING) {
-      return ITEM_CATALOG[state.selectedItemId]?.placementType ?? null;
-    }
-    if (state.mode === EditorMode.MOVING) {
+      catalogEntry = ITEM_CATALOG[state.selectedItemId] ?? null;
+    } else if (state.mode === EditorMode.MOVING) {
       const placed = findPlacedItem(placedItems, state.activePlacedItemId);
-      return placed ? ITEM_CATALOG[placed.itemId]?.placementType ?? null : null;
+      catalogEntry = placed ? ITEM_CATALOG[placed.itemId] ?? null : null;
     }
-    return null;
+    if (!catalogEntry) return null;
+    return { placementType: catalogEntry.placementType, footprint: getFootprint(catalogEntry) };
   }, [state, placedItems]);
 
   const highlightedPositions = useMemo(() => {
-    if (!activePlacementType) return [];
+    if (!activeItemConfig) return [];
     return getValidPositions({
-      placementType: activePlacementType,
+      placementType: activeItemConfig.placementType,
+      footprint: activeItemConfig.footprint,
       placedItems,
       excludePlacedItemId: state.mode === EditorMode.MOVING ? state.activePlacedItemId : undefined,
     });
-  }, [activePlacementType, placedItems, state]);
+  }, [activeItemConfig, placedItems, state]);
 
   const menuPlacedItem =
     state.mode === EditorMode.ITEM_MENU ? findPlacedItem(placedItems, state.activePlacedItemId) ?? null : null;
@@ -68,6 +74,9 @@ export function useRoomEditor({ placedItems, placeItem, movePlacedItem, flipPlac
     dispatch({ type: 'TAP_PLACED_ITEM', placedItemId });
   }, []);
 
+  // `position` here is whatever getValidPositions produced for this
+  // selection — {row, col} for floor, {face, row, col} for wall — so it
+  // already carries a face through to placeItem/movePlacedItem untouched.
   const tapTile = useCallback(
     (position) => {
       if (state.mode === EditorMode.PLACING) {
@@ -98,7 +107,8 @@ export function useRoomEditor({ placedItems, placeItem, movePlacedItem, flipPlac
     mode: state.mode,
     selectedItemId: state.selectedItemId,
     isSelectingTile: state.mode === EditorMode.PLACING || state.mode === EditorMode.MOVING,
-    activePlacementType,
+    activePlacementType: activeItemConfig?.placementType ?? null,
+    activeFootprint: activeItemConfig?.footprint ?? null,
     highlightedPositions,
     menuPlacedItem,
     selectInventoryItem,

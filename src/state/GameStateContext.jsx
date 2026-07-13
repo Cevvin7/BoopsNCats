@@ -6,7 +6,7 @@ import {
   recordActivityUpload as recordCatActivityUpload,
   needsAttention as computeNeedsAttention,
 } from '../cat/happinessModel.js';
-import { ITEM_CATALOG } from '../inventory/itemCatalog.js';
+import { ITEM_CATALOG, getFootprint } from '../inventory/itemCatalog.js';
 import { defaultInventory, decrementQuantity, incrementQuantity } from '../inventory/inventoryModel.js';
 import {
   addPlacedItem,
@@ -74,10 +74,11 @@ export function GameStateProvider({ children }) {
     setState((prev) => ({ ...prev, cat: recordCatActivityUpload(prev.cat, Date.now()) }));
   }, [setState]);
 
-  // Places one unit of itemId from inventory onto the room. Re-validates
-  // the position itself (rather than trusting the caller) so a stale
-  // highlight click can never corrupt state, even though in practice the
-  // UI only ever offers already-valid tiles.
+  // Places one unit of itemId from inventory onto the room. `position` is
+  // the footprint's anchor tile, plus `face` when it's a wall item.
+  // Re-validates the position itself (rather than trusting the caller) so
+  // a stale highlight click can never corrupt state, even though in
+  // practice the UI only ever offers already-valid tiles.
   const placeItem = useCallback(
     (itemId, position) => {
       setState((prev) => {
@@ -89,7 +90,9 @@ export function GameStateProvider({ children }) {
 
         const isValid = isValidPlacementPosition({
           placementType: catalogEntry.placementType,
+          footprint: getFootprint(catalogEntry),
           position,
+          face: position.face,
           placedItems: prev.placedItems,
         });
         if (!isValid) return prev;
@@ -97,7 +100,12 @@ export function GameStateProvider({ children }) {
         return {
           ...prev,
           inventory: decrementQuantity(prev.inventory, itemId),
-          placedItems: addPlacedItem(prev.placedItems, { itemId, row: position.row, col: position.col }),
+          placedItems: addPlacedItem(prev.placedItems, {
+            itemId,
+            row: position.row,
+            col: position.col,
+            face: position.face,
+          }),
         };
       });
     },
@@ -113,13 +121,22 @@ export function GameStateProvider({ children }) {
         const catalogEntry = ITEM_CATALOG[placed.itemId];
         const isValid = isValidPlacementPosition({
           placementType: catalogEntry.placementType,
+          footprint: getFootprint(catalogEntry),
           position,
+          face: position.face,
           placedItems: prev.placedItems,
           excludePlacedItemId: placedItemId,
         });
         if (!isValid) return prev;
 
-        return { ...prev, placedItems: movePlacedItemInList(prev.placedItems, placedItemId, position) };
+        return {
+          ...prev,
+          placedItems: movePlacedItemInList(prev.placedItems, placedItemId, {
+            row: position.row,
+            col: position.col,
+            face: position.face,
+          }),
+        };
       });
     },
     [setState],
