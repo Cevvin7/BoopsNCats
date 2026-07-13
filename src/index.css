@@ -1,0 +1,14 @@
+:root {
+  color-scheme: dark;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+body {
+  margin: 0;
+  background: #2b2d42;
+  color: #edf2f4;
+}
+
+button {
+  font-family: inherit;
+}
