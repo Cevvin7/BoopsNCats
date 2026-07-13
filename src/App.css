@@ -38,54 +38,45 @@
   letter-spacing: 0.05em;
 }
 
-.cat-status {
+.placeholder-cat {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   align-items: center;
+  gap: 0.25rem;
+  padding: 1.5rem;
+  border-radius: 12px;
+  text-align: center;
 }
 
-.status-badge {
-  padding: 0.25rem 0.6rem;
-  border-radius: 999px;
-  font-size: 0.85rem;
-  font-weight: 600;
-}
-
-.status-healthy {
+.placeholder-cat--happy {
   background: rgba(76, 201, 148, 0.2);
   color: #4cc994;
 }
 
-.status-needs-attention {
-  background: rgba(255, 209, 102, 0.2);
-  color: #ffd166;
-}
-
-.status-sick {
+.placeholder-cat--needs-attention {
   background: rgba(239, 71, 111, 0.2);
   color: #ef476f;
 }
 
-.care-button,
-.unit-toggle {
-  background: #8d99ae;
-  color: #2b2d42;
-  border: none;
-  border-radius: 6px;
-  padding: 0.5rem 1rem;
+.placeholder-cat-emoji {
+  font-size: 2.5rem;
+}
+
+.placeholder-cat-happiness {
+  font-weight: 700;
+}
+
+.placeholder-cat-label {
+  font-size: 0.85rem;
   font-weight: 600;
-  cursor: pointer;
 }
 
-.unit-toggle {
-  padding: 0.1rem 0.5rem;
-  font-size: 0.75rem;
-  vertical-align: middle;
-}
-
-.care-button:hover,
-.unit-toggle:hover {
-  background: #edf2f4;
+.dev-tools {
+  border: 1px dashed #8d99ae;
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8rem;
+  color: #8d99ae;
 }
 
 .upload-section h2 {

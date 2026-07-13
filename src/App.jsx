@@ -1,25 +1,21 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useGameState } from './state/GameStateContext.jsx';
-import { computeCatHealth } from './cat/catStateMachine.js';
-import { Room } from './room/Room.jsx';
 import { GpxUpload } from './upload/GpxUpload.jsx';
 import { BoopsDisplay } from './ui/BoopsDisplay.jsx';
-import { CatStatusBadge } from './ui/CatStatusBadge.jsx';
-import { CareButton } from './ui/CareButton.jsx';
+import { PlaceholderCat } from './cat/PlaceholderCat.jsx';
 import './App.css';
 
+// Phase 2 adds cat happiness on top of Phase 1's upload -> parse ->
+// calculate -> display pipeline. Room/sprite/inventory UI still isn't
+// built yet — this phase is state + a placeholder box only.
 export default function App() {
-  const { boops, lastInteractionAt, addBoops, careForCat } = useGameState();
+  const { boops, cat, needsAttention, addBoops, recordActivityUpload, advanceOneDayForTesting } =
+    useGameState();
   const [lastUpload, setLastUpload] = useState(null);
-  const [unit, setUnit] = useState('mi');
-
-  // Re-derived from lastInteractionAt on every render rather than stored —
-  // there's no need for a ticking clock, health is just "how long has it
-  // been" evaluated fresh each time the app is open.
-  const catHealth = useMemo(() => computeCatHealth(lastInteractionAt), [lastInteractionAt]);
 
   function handleUploadResult(result) {
     addBoops(result.boops);
+    recordActivityUpload();
     setLastUpload(result);
   }
 
@@ -30,12 +26,7 @@ export default function App() {
         <BoopsDisplay boops={boops} />
       </header>
 
-      <Room catHealth={catHealth} />
-
-      <section className="cat-status">
-        <CatStatusBadge health={catHealth} />
-        <CareButton onCare={careForCat} />
-      </section>
+      <PlaceholderCat happiness={cat.happiness} needsAttention={needsAttention} />
 
       <section className="upload-section">
         <h2>Log a walk</h2>
@@ -46,21 +37,24 @@ export default function App() {
               <strong>{lastUpload.fileName}</strong>
             </p>
             <p>
-              {unit === 'mi'
-                ? `${lastUpload.miles.toFixed(2)} mi`
-                : `${lastUpload.km.toFixed(2)} km`}{' '}
-              <button
-                type="button"
-                className="unit-toggle"
-                onClick={() => setUnit((u) => (u === 'mi' ? 'km' : 'mi'))}
-              >
-                switch to {unit === 'mi' ? 'km' : 'mi'}
-              </button>
+              {lastUpload.miles.toFixed(2)} mi ({lastUpload.km.toFixed(2)} km)
             </p>
             <p>+{lastUpload.boops.toLocaleString()} boops earned</p>
           </div>
         )}
       </section>
+
+      {/* DEV-ONLY — exercises the real decay logic a day at a time so you
+          don't have to wait a literal week to see happiness drop. Vite
+          strips this out of production builds via import.meta.env.DEV. */}
+      {import.meta.env.DEV && (
+        <section className="dev-tools">
+          <p>Dev tool (not shipped in production build):</p>
+          <button type="button" onClick={advanceOneDayForTesting}>
+            Advance one day
+          </button>
+        </section>
+      )}
     </div>
   );
 }
