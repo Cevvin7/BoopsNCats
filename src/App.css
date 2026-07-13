@@ -38,39 +38,6 @@
   letter-spacing: 0.05em;
 }
 
-.placeholder-cat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 1.5rem;
-  border-radius: 12px;
-  text-align: center;
-}
-
-.placeholder-cat--happy {
-  background: rgba(76, 201, 148, 0.2);
-  color: #4cc994;
-}
-
-.placeholder-cat--needs-attention {
-  background: rgba(239, 71, 111, 0.2);
-  color: #ef476f;
-}
-
-.placeholder-cat-emoji {
-  font-size: 2.5rem;
-}
-
-.placeholder-cat-happiness {
-  font-weight: 700;
-}
-
-.placeholder-cat-label {
-  font-size: 0.85rem;
-  font-weight: 600;
-}
-
 .dev-tools {
   border: 1px dashed #8d99ae;
   border-radius: 8px;
