@@ -1,0 +1,24 @@
+.gpx-dropzone {
+  border: 2px dashed #8d99ae;
+  border-radius: 8px;
+  padding: 2rem 1rem;
+  text-align: center;
+  cursor: pointer;
+  color: #edf2f4;
+  transition: border-color 0.15s, background-color 0.15s;
+}
+
+.gpx-dropzone:hover,
+.gpx-dropzone:focus-visible {
+  border-color: #edf2f4;
+}
+
+.gpx-dropzone--active {
+  border-color: #ef8354;
+  background-color: rgba(239, 131, 84, 0.08);
+}
+
+.gpx-upload-error {
+  color: #ef476f;
+  margin-top: 0.5rem;
+}

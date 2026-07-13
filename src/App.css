@@ -1,0 +1,107 @@
+.app {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.app-header h1 {
+  font-size: 1.4rem;
+  margin: 0;
+}
+
+.boops-display {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: 1.1;
+}
+
+.boops-count {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #ef8354;
+}
+
+.boops-label {
+  font-size: 0.75rem;
+  color: #8d99ae;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.cat-status {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.status-badge {
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.status-healthy {
+  background: rgba(76, 201, 148, 0.2);
+  color: #4cc994;
+}
+
+.status-needs-attention {
+  background: rgba(255, 209, 102, 0.2);
+  color: #ffd166;
+}
+
+.status-sick {
+  background: rgba(239, 71, 111, 0.2);
+  color: #ef476f;
+}
+
+.care-button,
+.unit-toggle {
+  background: #8d99ae;
+  color: #2b2d42;
+  border: none;
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.unit-toggle {
+  padding: 0.1rem 0.5rem;
+  font-size: 0.75rem;
+  vertical-align: middle;
+}
+
+.care-button:hover,
+.unit-toggle:hover {
+  background: #edf2f4;
+}
+
+.upload-section h2 {
+  font-size: 1rem;
+  color: #8d99ae;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.upload-summary {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: rgba(141, 153, 174, 0.1);
+  border-radius: 8px;
+}
+
+.upload-summary p {
+  margin: 0.25rem 0;
+}
