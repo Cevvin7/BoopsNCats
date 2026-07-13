@@ -1,0 +1,19 @@
+.tile-grid-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+}
+
+.tile-highlight {
+  position: absolute;
+  box-sizing: border-box;
+  border: 2px solid rgba(76, 201, 148, 0.9);
+  background: rgba(76, 201, 148, 0.35);
+  border-radius: 4px;
+  padding: 0;
+  cursor: pointer;
+}
+
+.tile-highlight:hover {
+  background: rgba(76, 201, 148, 0.55);
+}

@@ -8,6 +8,7 @@
 .room-art-layer {
   position: absolute;
   inset: 0;
+  z-index: 1;
   width: 100%;
   height: 100%;
   image-rendering: pixelated;
@@ -15,16 +16,21 @@
   user-select: none;
 }
 
-/* Absolute-positioned overlay so entities (cat now, inventory items later)
-   sit on top of the room art using percentages from roomGrid.js's
-   projection functions, independent of how the art itself renders. */
+/* Absolute-positioned overlay so entities (cat, placed items) sit on top
+   of the room art using percentages from roomGrid.js's projection
+   functions, independent of how the art itself renders. pointer-events is
+   none on the container (so empty space doesn't block taps on the tile
+   grid underneath it) but re-enabled per entity so placed items stay
+   clickable in edit mode. */
 .room-entities {
   position: absolute;
   inset: 0;
+  z-index: 2;
   pointer-events: none;
 }
 
 .room-entity {
   position: absolute;
   transform: translate(-50%, -50%);
+  pointer-events: auto;
 }

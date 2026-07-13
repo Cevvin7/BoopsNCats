@@ -18,6 +18,35 @@
   margin: 0;
 }
 
+.app-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.edit-mode-toggle {
+  background: #8d99ae;
+  color: #2b2d42;
+  border: none;
+  border-radius: 6px;
+  padding: 0.4rem 0.9rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.edit-mode-toggle:hover {
+  background: #edf2f4;
+}
+
+.inventory-section h2 {
+  font-size: 1rem;
+  color: #8d99ae;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+
 .boops-display {
   display: flex;
   flex-direction: column;
