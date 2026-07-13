@@ -3,46 +3,21 @@
   width: 100%;
   max-width: 480px;
   margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  border: 4px solid #2b2d42;
-  border-radius: 8px;
-  overflow: hidden;
 }
 
-.wall-area {
-  background: #3a4a63;
-  padding: 4%;
-  box-sizing: border-box;
-  min-height: 0;
-}
-
-.floor-area {
-  background: #b98d5e;
-  box-sizing: border-box;
-  min-height: 0;
-}
-
-.wall-grid,
-.floor-grid {
-  display: grid;
+.room-art-layer {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
-  gap: 2%;
-}
-
-.wall-slot {
-  border: 1px dashed rgba(237, 242, 244, 0.45);
-  border-radius: 15%;
-}
-
-.floor-tile {
-  border: 1px solid rgba(43, 45, 66, 0.25);
+  image-rendering: pixelated;
+  pointer-events: none;
+  user-select: none;
 }
 
 /* Absolute-positioned overlay so entities (cat now, inventory items later)
-   sit on top of the floor/wall grids using percentages from roomGrid.js's
-   projection functions, independent of how those grids render visually. */
+   sit on top of the room art using percentages from roomGrid.js's
+   projection functions, independent of how the art itself renders. */
 .room-entities {
   position: absolute;
   inset: 0;
