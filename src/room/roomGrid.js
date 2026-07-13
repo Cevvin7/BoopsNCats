@@ -1,10 +1,11 @@
 export const FLOOR_ROWS = 8;
 export const FLOOR_COLS = 8;
 
-// "Roughly 15" wall-mountable positions — a 5x3 grid gives exactly 15
-// while staying its own addressable space, independent of the floor's
-// row/col numbering.
-export const WALL_ROWS = 3;
+// The wall grid is its own addressable space, independent of the floor's
+// row/col numbering. It's 6 rows tall visually (kickboard + hangable
+// zone below), but see WALL_HANGABLE_ROWS/isInHangableWallZone — not all
+// 6 rows are valid for onWall placement.
+export const WALL_ROWS = 6;
 export const WALL_COLS = 5;
 
 const WALL_HEIGHT_FRACTION = 0.35;
@@ -77,6 +78,19 @@ export function isValidWallPosition(position) {
  */
 export function isAgainstWall({ row }) {
   return row === 0;
+}
+
+// The bottom-most wall rows (closest to the floor) render as a
+// "kickboard" transition band and are never valid for onWall placement —
+// only the hangable zone above it is real wall-mounting space. Row 0 is
+// the TOP of the wall (WALL_REGION.top = 0, rows increase downward
+// toward the floor — see createGridProjection), so the kickboard is the
+// LAST WALL_KICKBOARD_ROWS row indices, not the first.
+export const WALL_KICKBOARD_ROWS = 2;
+export const WALL_HANGABLE_ROWS = WALL_ROWS - WALL_KICKBOARD_ROWS;
+
+export function isInHangableWallZone({ row }) {
+  return row < WALL_HANGABLE_ROWS;
 }
 
 /**

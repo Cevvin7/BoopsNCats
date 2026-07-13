@@ -19,6 +19,9 @@ import {
   createGridCellRect,
   floorCellRect,
   wallCellRect,
+  isInHangableWallZone,
+  WALL_HANGABLE_ROWS,
+  WALL_KICKBOARD_ROWS,
 } from './roomGrid.js';
 
 describe('createGridProjection', () => {
@@ -77,6 +80,19 @@ describe('isAgainstWall', () => {
     expect(isAgainstWall({ row: 0, col: FLOOR_COLS - 1 })).toBe(true);
     expect(isAgainstWall({ row: 1, col: 0 })).toBe(false);
     expect(isAgainstWall({ row: FLOOR_ROWS - 1, col: 0 })).toBe(false);
+  });
+});
+
+describe('isInHangableWallZone', () => {
+  it('is true for the top (hangable) rows and false for the bottom kickboard rows', () => {
+    expect(isInHangableWallZone({ row: 0 })).toBe(true);
+    expect(isInHangableWallZone({ row: WALL_HANGABLE_ROWS - 1 })).toBe(true);
+    expect(isInHangableWallZone({ row: WALL_HANGABLE_ROWS })).toBe(false);
+    expect(isInHangableWallZone({ row: WALL_ROWS - 1 })).toBe(false);
+  });
+
+  it('reserves exactly WALL_KICKBOARD_ROWS rows at the bottom of the wall grid', () => {
+    expect(WALL_HANGABLE_ROWS + WALL_KICKBOARD_ROWS).toBe(WALL_ROWS);
   });
 });
 

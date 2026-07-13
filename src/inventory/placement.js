@@ -6,6 +6,7 @@ import {
   isValidFloorPosition,
   isValidWallPosition,
   isAgainstWall,
+  isInHangableWallZone,
 } from '../room/roomGrid.js';
 import { ITEM_CATALOG, PlacementType } from './itemCatalog.js';
 
@@ -28,6 +29,9 @@ function samePosition(a, b) {
  *     that borders the wall (roomGrid.isAgainstWall) — see the
  *     explanation on that function for why it's row-based rather than a
  *     per-column check against the wall grid
+ *  2b. for onWall specifically, it's also outside the kickboard band
+ *     (roomGrid.isInHangableWallZone) — the bottom rows of the wall grid
+ *     render as a floor/wall transition strip and are never mountable
  *  3. nothing else is already occupying that exact tile in that region
  *     (excludePlacedItemId lets a placed item's own current tile not
  *     count as "occupied by itself" while it's being moved)
@@ -37,6 +41,7 @@ export function isValidPlacementPosition({ placementType, position, placedItems,
 
   if (region === 'wall') {
     if (!isValidWallPosition(position)) return false;
+    if (!isInHangableWallZone(position)) return false;
   } else {
     if (!isValidFloorPosition(position)) return false;
     if (placementType === PlacementType.ON_FLOOR_AGAINST_WALL && !isAgainstWall(position)) return false;

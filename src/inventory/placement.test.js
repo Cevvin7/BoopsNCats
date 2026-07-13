@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { isValidPlacementPosition, getValidPositions, regionForPlacementType } from './placement.js';
 import { PlacementType } from './itemCatalog.js';
-import { FLOOR_ROWS, FLOOR_COLS, WALL_ROWS, WALL_COLS } from '../room/roomGrid.js';
+import { FLOOR_ROWS, FLOOR_COLS, WALL_ROWS, WALL_COLS, WALL_HANGABLE_ROWS } from '../room/roomGrid.js';
 
 describe('regionForPlacementType', () => {
   it('maps onWall to the wall region and both floor types to the floor region', () => {
@@ -60,7 +60,7 @@ describe('isValidPlacementPosition: onFloorAgainstWall', () => {
 });
 
 describe('isValidPlacementPosition: onWall', () => {
-  it('accepts any in-bounds wall tile and rejects out-of-bounds', () => {
+  it('accepts an in-bounds hangable-zone wall tile and rejects out-of-bounds', () => {
     expect(
       isValidPlacementPosition({ placementType: PlacementType.ON_WALL, position: { row: 0, col: 0 }, placedItems: [] }),
     ).toBe(true);
@@ -71,6 +71,30 @@ describe('isValidPlacementPosition: onWall', () => {
         placedItems: [],
       }),
     ).toBe(false);
+  });
+
+  it('rejects the bottom kickboard rows even though they are in-bounds', () => {
+    expect(
+      isValidPlacementPosition({
+        placementType: PlacementType.ON_WALL,
+        position: { row: WALL_ROWS - 1, col: 0 },
+        placedItems: [],
+      }),
+    ).toBe(false);
+    expect(
+      isValidPlacementPosition({
+        placementType: PlacementType.ON_WALL,
+        position: { row: WALL_HANGABLE_ROWS, col: 0 }, // first kickboard row
+        placedItems: [],
+      }),
+    ).toBe(false);
+    expect(
+      isValidPlacementPosition({
+        placementType: PlacementType.ON_WALL,
+        position: { row: WALL_HANGABLE_ROWS - 1, col: 0 }, // last hangable row
+        placedItems: [],
+      }),
+    ).toBe(true);
   });
 });
 
@@ -110,9 +134,10 @@ describe('getValidPositions', () => {
     expect(positions.every((p) => p.row === 0)).toBe(true);
   });
 
-  it('lists every wall tile for onWall on an empty room', () => {
+  it('lists only hangable-zone wall tiles for onWall on an empty room, excluding the kickboard rows', () => {
     const positions = getValidPositions({ placementType: PlacementType.ON_WALL, placedItems: [] });
-    expect(positions).toHaveLength(WALL_ROWS * WALL_COLS);
+    expect(positions).toHaveLength(WALL_HANGABLE_ROWS * WALL_COLS);
+    expect(positions.every((p) => p.row < WALL_HANGABLE_ROWS)).toBe(true);
   });
 
   it('shrinks by exactly one per occupied tile of the same region', () => {
