@@ -2,12 +2,12 @@ import { useState } from 'react';
 import { useGameState } from './state/GameStateContext.jsx';
 import { GpxUpload } from './upload/GpxUpload.jsx';
 import { BoopsDisplay } from './ui/BoopsDisplay.jsx';
-import { PlaceholderCat } from './cat/PlaceholderCat.jsx';
+import { Room } from './room/Room.jsx';
 import './App.css';
 
-// Phase 2 adds cat happiness on top of Phase 1's upload -> parse ->
-// calculate -> display pipeline. Room/sprite/inventory UI still isn't
-// built yet — this phase is state + a placeholder box only.
+// Phase 3 adds the floor/wall grid and places the Phase 2 placeholder cat
+// on it. Item placement, edit mode, and real isometric art still aren't
+// built yet.
 export default function App() {
   const { boops, cat, needsAttention, addBoops, recordActivityUpload, advanceOneDayForTesting } =
     useGameState();
@@ -26,7 +26,7 @@ export default function App() {
         <BoopsDisplay boops={boops} />
       </header>
 
-      <PlaceholderCat happiness={cat.happiness} needsAttention={needsAttention} />
+      <Room catHappiness={cat.happiness} catNeedsAttention={needsAttention} />
 
       <section className="upload-section">
         <h2>Log a walk</h2>
