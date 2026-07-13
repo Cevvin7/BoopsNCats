@@ -63,3 +63,41 @@ export function isValidFloorPosition(position) {
 export function isValidWallPosition(position) {
   return isValidPosition(position, WALL_REGION);
 }
+
+/**
+ * Which floor tiles count as "against a wall," for onFloorAgainstWall
+ * placement (e.g. a bookshelf). The floor and wall are two independent
+ * grids with different column counts (8 vs 5), so there's no per-column
+ * mapping between them — this is a property of the room's shape instead:
+ * row 0 is the floor row closest to the wall region (FLOOR_REGION.top
+ * starts exactly where WALL_REGION ends), and today that's the only wall
+ * this room has. If the room grows side walls later, this becomes
+ * `row === 0 || col === 0 || col === FLOOR_COLS - 1` — the one place that
+ * changes, not every caller that checks wall-adjacency.
+ */
+export function isAgainstWall({ row }) {
+  return row === 0;
+}
+
+/**
+ * Like createGridProjection, but returns a cell's full bounding box
+ * (as room-relative percentages) instead of just its center point —
+ * needed to render a tile as a highightable/clickable rectangle rather
+ * than position a single point-like entity on it.
+ */
+export function createGridCellRect({ rows, cols, top, left, width, height }) {
+  const cellWidth = width / cols;
+  const cellHeight = height / rows;
+
+  return function toScreenRect({ row, col }) {
+    return {
+      leftPercent: (left + cellWidth * col) * 100,
+      topPercent: (top + cellHeight * row) * 100,
+      widthPercent: cellWidth * 100,
+      heightPercent: cellHeight * 100,
+    };
+  };
+}
+
+export const floorCellRect = createGridCellRect(FLOOR_REGION);
+export const wallCellRect = createGridCellRect(WALL_REGION);

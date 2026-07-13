@@ -6,6 +6,16 @@ import {
   recordActivityUpload as recordCatActivityUpload,
   needsAttention as computeNeedsAttention,
 } from '../cat/happinessModel.js';
+import { ITEM_CATALOG } from '../inventory/itemCatalog.js';
+import { defaultInventory, decrementQuantity, incrementQuantity } from '../inventory/inventoryModel.js';
+import {
+  addPlacedItem,
+  removePlacedItem,
+  movePlacedItem as movePlacedItemInList,
+  flipPlacedItem as flipPlacedItemInList,
+  findPlacedItem,
+} from '../inventory/placedItemsModel.js';
+import { isValidPlacementPosition } from '../inventory/placement.js';
 
 const STORAGE_KEY = 'boopTracker.gameState';
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
@@ -19,6 +29,8 @@ function defaultState() {
   return {
     boops: 0,
     cat: defaultCat(),
+    inventory: defaultInventory(),
+    placedItems: [],
   };
 }
 
@@ -62,6 +74,81 @@ export function GameStateProvider({ children }) {
     setState((prev) => ({ ...prev, cat: recordCatActivityUpload(prev.cat, Date.now()) }));
   }, [setState]);
 
+  // Places one unit of itemId from inventory onto the room. Re-validates
+  // the position itself (rather than trusting the caller) so a stale
+  // highlight click can never corrupt state, even though in practice the
+  // UI only ever offers already-valid tiles.
+  const placeItem = useCallback(
+    (itemId, position) => {
+      setState((prev) => {
+        const catalogEntry = ITEM_CATALOG[itemId];
+        if (!catalogEntry) return prev;
+
+        const inventoryEntry = prev.inventory.find((entry) => entry.itemId === itemId);
+        if (!inventoryEntry || inventoryEntry.quantity <= 0) return prev;
+
+        const isValid = isValidPlacementPosition({
+          placementType: catalogEntry.placementType,
+          position,
+          placedItems: prev.placedItems,
+        });
+        if (!isValid) return prev;
+
+        return {
+          ...prev,
+          inventory: decrementQuantity(prev.inventory, itemId),
+          placedItems: addPlacedItem(prev.placedItems, { itemId, row: position.row, col: position.col }),
+        };
+      });
+    },
+    [setState],
+  );
+
+  const movePlacedItem = useCallback(
+    (placedItemId, position) => {
+      setState((prev) => {
+        const placed = findPlacedItem(prev.placedItems, placedItemId);
+        if (!placed) return prev;
+
+        const catalogEntry = ITEM_CATALOG[placed.itemId];
+        const isValid = isValidPlacementPosition({
+          placementType: catalogEntry.placementType,
+          position,
+          placedItems: prev.placedItems,
+          excludePlacedItemId: placedItemId,
+        });
+        if (!isValid) return prev;
+
+        return { ...prev, placedItems: movePlacedItemInList(prev.placedItems, placedItemId, position) };
+      });
+    },
+    [setState],
+  );
+
+  const flipPlacedItem = useCallback(
+    (placedItemId) => {
+      setState((prev) => ({ ...prev, placedItems: flipPlacedItemInList(prev.placedItems, placedItemId) }));
+    },
+    [setState],
+  );
+
+  // Deleting never destroys the item — it goes back to inventory.
+  const deletePlacedItem = useCallback(
+    (placedItemId) => {
+      setState((prev) => {
+        const placed = findPlacedItem(prev.placedItems, placedItemId);
+        if (!placed) return prev;
+
+        return {
+          ...prev,
+          inventory: incrementQuantity(prev.inventory, placed.itemId),
+          placedItems: removePlacedItem(prev.placedItems, placedItemId),
+        };
+      });
+    },
+    [setState],
+  );
+
   // DEV-ONLY TESTING TOOL — remove before this game leaves prototype stage.
   // Rewinds lastDecayCheck by 24h so the *real* decay function sees a local
   // noon it hasn't accounted for yet, instead of faking a decrement through
@@ -101,8 +188,22 @@ export function GameStateProvider({ children }) {
       spendBoops,
       recordActivityUpload,
       advanceOneDayForTesting,
+      placeItem,
+      movePlacedItem,
+      flipPlacedItem,
+      deletePlacedItem,
     }),
-    [state, addBoops, spendBoops, recordActivityUpload, advanceOneDayForTesting],
+    [
+      state,
+      addBoops,
+      spendBoops,
+      recordActivityUpload,
+      advanceOneDayForTesting,
+      placeItem,
+      movePlacedItem,
+      flipPlacedItem,
+      deletePlacedItem,
+    ],
   );
 
   return <GameStateContext.Provider value={value}>{children}</GameStateContext.Provider>;

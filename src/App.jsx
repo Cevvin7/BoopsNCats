@@ -3,15 +3,32 @@ import { useGameState } from './state/GameStateContext.jsx';
 import { GpxUpload } from './upload/GpxUpload.jsx';
 import { BoopsDisplay } from './ui/BoopsDisplay.jsx';
 import { Room } from './room/Room.jsx';
+import { useRoomEditor, EditorMode } from './room/useRoomEditor.js';
+import { InventoryPanel } from './inventory/InventoryPanel.jsx';
 import './App.css';
 
-// Phase 3 adds the floor/wall grid and places the Phase 2 placeholder cat
-// on it. Item placement, edit mode, and real isometric art still aren't
-// built yet.
+// Phase 4 adds inventory + item placement on top of the Phase 3.5 room.
+// The "Edit" button here stands in for what will eventually be one of
+// three header buttons (Edit, Upload, Settings).
 export default function App() {
-  const { boops, cat, needsAttention, addBoops, recordActivityUpload, advanceOneDayForTesting } =
-    useGameState();
+  const {
+    boops,
+    cat,
+    needsAttention,
+    inventory,
+    placedItems,
+    addBoops,
+    recordActivityUpload,
+    advanceOneDayForTesting,
+    placeItem,
+    movePlacedItem,
+    flipPlacedItem,
+    deletePlacedItem,
+  } = useGameState();
   const [lastUpload, setLastUpload] = useState(null);
+  const [editMode, setEditMode] = useState(false);
+
+  const roomEditor = useRoomEditor({ placedItems, placeItem, movePlacedItem, flipPlacedItem, deletePlacedItem });
 
   function handleUploadResult(result) {
     addBoops(result.boops);
@@ -19,14 +36,43 @@ export default function App() {
     setLastUpload(result);
   }
 
+  function toggleEditMode() {
+    setEditMode((wasEditing) => {
+      if (wasEditing) roomEditor.cancel(); // drop any in-progress selection/popup on exit
+      return !wasEditing;
+    });
+  }
+
   return (
     <div className="app">
       <header className="app-header">
         <h1>Boop Tracker</h1>
-        <BoopsDisplay boops={boops} />
+        <div className="app-header-actions">
+          <button type="button" className="edit-mode-toggle" onClick={toggleEditMode}>
+            {editMode ? 'Done' : 'Edit'}
+          </button>
+          <BoopsDisplay boops={boops} />
+        </div>
       </header>
 
-      <Room catHappiness={cat.happiness} catNeedsAttention={needsAttention} />
+      <Room
+        catHappiness={cat.happiness}
+        catNeedsAttention={needsAttention}
+        placedItems={placedItems}
+        editMode={editMode}
+        roomEditor={roomEditor}
+      />
+
+      {editMode && (
+        <section className="inventory-section">
+          <h2>Inventory</h2>
+          <InventoryPanel
+            inventory={inventory}
+            selectedItemId={roomEditor.mode === EditorMode.PLACING ? roomEditor.selectedItemId : null}
+            onSelectItem={roomEditor.selectInventoryItem}
+          />
+        </section>
+      )}
 
       <section className="upload-section">
         <h2>Log a walk</h2>

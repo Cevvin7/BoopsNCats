@@ -1,0 +1,13 @@
+.placed-item-sprite {
+  width: 100%;
+  aspect-ratio: 1;
+  border: none;
+  border-radius: 4px;
+  padding: 0;
+  cursor: pointer;
+}
+
+.placed-item-sprite:disabled {
+  opacity: 1;
+  cursor: default;
+}

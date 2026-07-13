@@ -15,6 +15,10 @@ import {
   wallPosition,
   isValidFloorPosition,
   isValidWallPosition,
+  isAgainstWall,
+  createGridCellRect,
+  floorCellRect,
+  wallCellRect,
 } from './roomGrid.js';
 
 describe('createGridProjection', () => {
@@ -64,6 +68,37 @@ describe('isValidPosition / isValidFloorPosition / isValidWallPosition', () => {
     expect(isValidFloorPosition({ row: FLOOR_ROWS, col: 0 })).toBe(false);
     expect(isValidWallPosition({ row: WALL_ROWS - 1, col: WALL_COLS - 1 })).toBe(true);
     expect(isValidWallPosition({ row: WALL_ROWS, col: 0 })).toBe(false);
+  });
+});
+
+describe('isAgainstWall', () => {
+  it('is true only for row 0, regardless of column', () => {
+    expect(isAgainstWall({ row: 0, col: 0 })).toBe(true);
+    expect(isAgainstWall({ row: 0, col: FLOOR_COLS - 1 })).toBe(true);
+    expect(isAgainstWall({ row: 1, col: 0 })).toBe(false);
+    expect(isAgainstWall({ row: FLOOR_ROWS - 1, col: 0 })).toBe(false);
+  });
+});
+
+describe('createGridCellRect', () => {
+  it('returns each cell\'s bounding box within a simple 2x2 region', () => {
+    const rect = createGridCellRect({ rows: 2, cols: 2, top: 0, left: 0, width: 1, height: 1 });
+    expect(rect({ row: 0, col: 0 })).toEqual({ leftPercent: 0, topPercent: 0, widthPercent: 50, heightPercent: 50 });
+    expect(rect({ row: 1, col: 1 })).toEqual({ leftPercent: 50, topPercent: 50, widthPercent: 50, heightPercent: 50 });
+  });
+
+  it('agrees with createGridProjection about where a cell center is', () => {
+    const project = createGridProjection(FLOOR_REGION);
+    const rect = floorCellRect({ row: 3, col: 2 });
+    const center = project({ row: 3, col: 2 });
+    expect(rect.leftPercent + rect.widthPercent / 2).toBeCloseTo(center.xPercent, 10);
+    expect(rect.topPercent + rect.heightPercent / 2).toBeCloseTo(center.yPercent, 10);
+  });
+
+  it('sizes wall cells using the wall region dimensions, not the floor\'s', () => {
+    const rect = wallCellRect({ row: 0, col: 0 });
+    expect(rect.widthPercent).toBeCloseTo((WALL_REGION.width / WALL_COLS) * 100, 10);
+    expect(rect.heightPercent).toBeCloseTo((WALL_REGION.height / WALL_ROWS) * 100, 10);
   });
 });
 

@@ -1,0 +1,44 @@
+.inventory-panel {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.inventory-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.5rem;
+  min-width: 4.5rem;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  background: rgba(141, 153, 174, 0.1);
+  color: inherit;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.inventory-item:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.inventory-item--selected {
+  border-color: #ef8354;
+}
+
+.inventory-item-swatch {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 4px;
+}
+
+.inventory-item-name {
+  font-size: 0.75rem;
+}
+
+.inventory-item-quantity {
+  font-size: 0.7rem;
+  color: #8d99ae;
+}
