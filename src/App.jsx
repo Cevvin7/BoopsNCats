@@ -2,17 +2,20 @@ import { useState } from 'react';
 import { useGameState } from './state/GameStateContext.jsx';
 import { GpxUpload } from './upload/GpxUpload.jsx';
 import { BoopsDisplay } from './ui/BoopsDisplay.jsx';
+import { PlaceholderCat } from './cat/PlaceholderCat.jsx';
 import './App.css';
 
-// Phase 1 scope: upload -> parse -> calculate -> display only.
-// Cat sprite, room, and the care/sickness state machine already exist
-// under src/cat and src/room but are intentionally not rendered here yet.
+// Phase 2 adds cat happiness on top of Phase 1's upload -> parse ->
+// calculate -> display pipeline. Room/sprite/inventory UI still isn't
+// built yet — this phase is state + a placeholder box only.
 export default function App() {
-  const { boops, addBoops } = useGameState();
+  const { boops, cat, needsAttention, addBoops, recordActivityUpload, advanceOneDayForTesting } =
+    useGameState();
   const [lastUpload, setLastUpload] = useState(null);
 
   function handleUploadResult(result) {
     addBoops(result.boops);
+    recordActivityUpload();
     setLastUpload(result);
   }
 
@@ -22,6 +25,8 @@ export default function App() {
         <h1>Boop Tracker</h1>
         <BoopsDisplay boops={boops} />
       </header>
+
+      <PlaceholderCat happiness={cat.happiness} needsAttention={needsAttention} />
 
       <section className="upload-section">
         <h2>Log a walk</h2>
@@ -38,6 +43,18 @@ export default function App() {
           </div>
         )}
       </section>
+
+      {/* DEV-ONLY — exercises the real decay logic a day at a time so you
+          don't have to wait a literal week to see happiness drop. Vite
+          strips this out of production builds via import.meta.env.DEV. */}
+      {import.meta.env.DEV && (
+        <section className="dev-tools">
+          <p>Dev tool (not shipped in production build):</p>
+          <button type="button" onClick={advanceOneDayForTesting}>
+            Advance one day
+          </button>
+        </section>
+      )}
     </div>
   );
 }
