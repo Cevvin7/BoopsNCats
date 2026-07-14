@@ -24,6 +24,7 @@
   gap: 0.75rem;
 }
 
+.upload-toggle,
 .edit-mode-toggle {
   background: #8d99ae;
   color: #2b2d42;
@@ -35,6 +36,7 @@
   cursor: pointer;
 }
 
+.upload-toggle:hover,
 .edit-mode-toggle:hover {
   background: #edf2f4;
 }
@@ -75,20 +77,3 @@
   color: #8d99ae;
 }
 
-.upload-section h2 {
-  font-size: 1rem;
-  color: #8d99ae;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.upload-summary {
-  margin-top: 1rem;
-  padding: 0.75rem;
-  background: rgba(141, 153, 174, 0.1);
-  border-radius: 8px;
-}
-
-.upload-summary p {
-  margin: 0.25rem 0;
-}
