@@ -18,7 +18,6 @@ import {
 import { isValidPlacementPosition } from '../inventory/placement.js';
 
 const STORAGE_KEY = 'boopTracker.gameState';
-const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 // Happiness only ever changes once per (local) day, so polling every few
 // minutes is plenty fresh without running a timer that fires constantly.
 const DECAY_CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -166,17 +165,6 @@ export function GameStateProvider({ children }) {
     [setState],
   );
 
-  // DEV-ONLY TESTING TOOL — remove before this game leaves prototype stage.
-  // Rewinds lastDecayCheck by 24h so the *real* decay function sees a local
-  // noon it hasn't accounted for yet, instead of faking a decrement through
-  // a separate code path that could drift from production behavior.
-  const advanceOneDayForTesting = useCallback(() => {
-    setState((prev) => {
-      const rewound = { ...prev.cat, lastDecayCheck: prev.cat.lastDecayCheck - ONE_DAY_MS };
-      return { ...prev, cat: applyHappinessDecay(rewound, Date.now()) };
-    });
-  }, [setState]);
-
   // Checked on mount, whenever the tab regains visibility (covers "closed
   // for days" and "backgrounded overnight"), and on a coarse interval while
   // open — not a tight polling loop, since browsers throttle background
@@ -204,23 +192,12 @@ export function GameStateProvider({ children }) {
       addBoops,
       spendBoops,
       recordActivityUpload,
-      advanceOneDayForTesting,
       placeItem,
       movePlacedItem,
       flipPlacedItem,
       deletePlacedItem,
     }),
-    [
-      state,
-      addBoops,
-      spendBoops,
-      recordActivityUpload,
-      advanceOneDayForTesting,
-      placeItem,
-      movePlacedItem,
-      flipPlacedItem,
-      deletePlacedItem,
-    ],
+    [state, addBoops, spendBoops, recordActivityUpload, placeItem, movePlacedItem, flipPlacedItem, deletePlacedItem],
   );
 
   return <GameStateContext.Provider value={value}>{children}</GameStateContext.Provider>;

@@ -1,15 +1,12 @@
 import { useState } from 'react';
 import { useGameState } from './state/GameStateContext.jsx';
-import { GpxUpload } from './upload/GpxUpload.jsx';
+import { UploadModal } from './upload/UploadModal.jsx';
 import { BoopsDisplay } from './ui/BoopsDisplay.jsx';
 import { RoomViewport } from './room/RoomViewport.jsx';
 import { useRoomEditor, EditorMode } from './room/useRoomEditor.js';
 import { InventoryPanel } from './inventory/InventoryPanel.jsx';
 import './App.css';
 
-// Phase 4 adds inventory + item placement on top of the Phase 3.5 room.
-// The "Edit" button here stands in for what will eventually be one of
-// three header buttons (Edit, Upload, Settings).
 export default function App() {
   const {
     boops,
@@ -19,7 +16,6 @@ export default function App() {
     placedItems,
     addBoops,
     recordActivityUpload,
-    advanceOneDayForTesting,
     placeItem,
     movePlacedItem,
     flipPlacedItem,
@@ -27,6 +23,7 @@ export default function App() {
   } = useGameState();
   const [lastUpload, setLastUpload] = useState(null);
   const [editMode, setEditMode] = useState(false);
+  const [uploadModalOpen, setUploadModalOpen] = useState(false);
 
   const roomEditor = useRoomEditor({ placedItems, placeItem, movePlacedItem, flipPlacedItem, deletePlacedItem });
 
@@ -48,6 +45,9 @@ export default function App() {
       <header className="app-header">
         <h1>BoopsNCats</h1>
         <div className="app-header-actions">
+          <button type="button" className="upload-toggle" onClick={() => setUploadModalOpen(true)}>
+            Upload
+          </button>
           <button type="button" className="edit-mode-toggle" onClick={toggleEditMode}>
             {editMode ? 'Done' : 'Edit'}
           </button>
@@ -74,32 +74,12 @@ export default function App() {
         </section>
       )}
 
-      <section className="upload-section">
-        <h2>Log a walk</h2>
-        <GpxUpload onResult={handleUploadResult} />
-        {lastUpload && (
-          <div className="upload-summary">
-            <p>
-              <strong>{lastUpload.fileName}</strong>
-            </p>
-            <p>
-              {lastUpload.miles.toFixed(2)} mi ({lastUpload.km.toFixed(2)} km)
-            </p>
-            <p>+{lastUpload.boops.toLocaleString()} boops earned</p>
-          </div>
-        )}
-      </section>
-
-      {/* DEV-ONLY — exercises the real decay logic a day at a time so you
-          don't have to wait a literal week to see happiness drop. Vite
-          strips this out of production builds via import.meta.env.DEV. */}
-      {import.meta.env.DEV && (
-        <section className="dev-tools">
-          <p>Dev tool (not shipped in production build):</p>
-          <button type="button" onClick={advanceOneDayForTesting}>
-            Advance one day
-          </button>
-        </section>
+      {uploadModalOpen && (
+        <UploadModal
+          onResult={handleUploadResult}
+          lastUpload={lastUpload}
+          onClose={() => setUploadModalOpen(false)}
+        />
       )}
     </div>
   );
