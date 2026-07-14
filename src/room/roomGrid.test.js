@@ -1,24 +1,19 @@
 import { describe, it, expect } from 'vitest';
 import {
-  createGridProjection,
   isValidPosition,
   centerOf,
-  FLOOR_REGION,
-  WALL_FACE_REGIONS,
   WALL_FACES,
   FLOOR_ROWS,
   FLOOR_COLS,
   WALL_ROWS,
   WALL_COLS,
   DEFAULT_CAT_POSITION,
-  ROOM_ASPECT_RATIO,
   floorPosition,
   wallPosition,
   isValidFloorPosition,
   isValidWallPosition,
   isValidWallFace,
   isAgainstWall,
-  createGridCellRect,
   floorCellRect,
   wallCellRect,
   isInHangableWallZone,
@@ -27,20 +22,54 @@ import {
   getFootprintScreenRect,
 } from './roomGrid.js';
 
-describe('createGridProjection', () => {
-  it('places cell centers correctly in a simple full-room 2x2 region', () => {
-    const project = createGridProjection({ rows: 2, cols: 2, top: 0, left: 0, width: 1, height: 1 });
-    expect(project({ row: 0, col: 0 })).toEqual({ xPercent: 25, yPercent: 25 });
-    expect(project({ row: 0, col: 1 })).toEqual({ xPercent: 75, yPercent: 25 });
-    expect(project({ row: 1, col: 0 })).toEqual({ xPercent: 25, yPercent: 75 });
-    expect(project({ row: 1, col: 1 })).toEqual({ xPercent: 75, yPercent: 75 });
+// The four vertices below are read directly off the room art's pixel data
+// (public/sprites/room/TestFloor1.png, a 512x448 canvas) and are the
+// ground truth the whole isometric projection is calibrated against.
+const FLOOR_TOP_PERCENT = { xPercent: (256 / 512) * 100, yPercent: (193 / 448) * 100 };
+const FLOOR_RIGHT_PERCENT = { xPercent: 100, yPercent: (320 / 448) * 100 };
+const FLOOR_BOTTOM_PERCENT = { xPercent: (256 / 512) * 100, yPercent: (447 / 448) * 100 };
+const FLOOR_LEFT_PERCENT = { xPercent: 0, yPercent: (320 / 448) * 100 };
+
+describe('floorCellRect', () => {
+  it('places the whole floor grid\'s outer corners at the art\'s measured diamond vertices', () => {
+    // Corner (0,0) -- the anchor point of the top-left-most cell -- is the
+    // diamond's TOP vertex: the top-most point of that cell's own box,
+    // and horizontally centered within it (same "side vertex" geometry
+    // as the LEFT/RIGHT checks below, just for the top/bottom pair).
+    const topLeftCell = floorCellRect({ row: 0, col: 0 });
+    expect(topLeftCell.leftPercent + topLeftCell.widthPercent / 2).toBeCloseTo(FLOOR_TOP_PERCENT.xPercent, 5);
+    expect(topLeftCell.topPercent).toBeCloseTo(FLOOR_TOP_PERCENT.yPercent, 5);
+
+    // The far corner of cell (FLOOR_ROWS-1, FLOOR_COLS-1) is the diamond's
+    // BOTTOM vertex -- the bottom-most point of that cell's own box, and
+    // horizontally centered within it.
+    const bottomCell = floorCellRect({ row: FLOOR_ROWS - 1, col: FLOOR_COLS - 1 });
+    expect(bottomCell.leftPercent + bottomCell.widthPercent / 2).toBeCloseTo(FLOOR_BOTTOM_PERCENT.xPercent, 5);
+    expect(bottomCell.topPercent + bottomCell.heightPercent).toBeCloseTo(FLOOR_BOTTOM_PERCENT.yPercent, 5);
+
+    // The far corner of cell (FLOOR_ROWS-1, 0) is the diamond's LEFT
+    // vertex -- the left-most point of that cell's own box. A diamond's
+    // side vertices sit at the vertical MIDPOINT of the cell they anchor
+    // (not the top or bottom), since they're the "side" points, not the
+    // "front"/"back" ones.
+    const leftCell = floorCellRect({ row: FLOOR_ROWS - 1, col: 0 });
+    expect(leftCell.leftPercent).toBeCloseTo(FLOOR_LEFT_PERCENT.xPercent, 5);
+    expect(leftCell.topPercent + leftCell.heightPercent / 2).toBeCloseTo(FLOOR_LEFT_PERCENT.yPercent, 5);
+
+    // The far corner of cell (0, FLOOR_COLS-1) is the diamond's RIGHT vertex.
+    const rightCell = floorCellRect({ row: 0, col: FLOOR_COLS - 1 });
+    expect(rightCell.leftPercent + rightCell.widthPercent).toBeCloseTo(FLOOR_RIGHT_PERCENT.xPercent, 5);
+    expect(rightCell.topPercent + rightCell.heightPercent / 2).toBeCloseTo(FLOOR_RIGHT_PERCENT.yPercent, 5);
   });
 
-  it('offsets correctly for a region that does not start at the room origin', () => {
-    // A 2-row, 1-col region occupying the bottom half of the room.
-    const project = createGridProjection({ rows: 2, cols: 1, top: 0.5, left: 0, width: 1, height: 0.5 });
-    expect(project({ row: 0, col: 0 })).toEqual({ xPercent: 50, yPercent: 62.5 });
-    expect(project({ row: 1, col: 0 })).toEqual({ xPercent: 50, yPercent: 87.5 });
+  it('sizes every floor tile as a 2:1 (64x31.75 native px) diamond, regardless of position', () => {
+    const a = floorCellRect({ row: 0, col: 0 });
+    const b = floorCellRect({ row: 3, col: 5 });
+    const c = floorCellRect({ row: 7, col: 7 });
+    for (const rect of [a, b, c]) {
+      expect(rect.widthPercent).toBeCloseTo((64 / 512) * 100, 8);
+      expect(rect.heightPercent).toBeCloseTo((31.75 / 448) * 100, 8);
+    }
   });
 });
 
@@ -53,19 +82,37 @@ describe('floorPosition / wallPosition', () => {
     expect(topLeftOfFloor.yPercent).toBeGreaterThan(bottomOfRightWall.yPercent);
   });
 
-  it('centers the default cat position within the floor grid bounds', () => {
+  it('centers the default cat position within the floor diamond', () => {
     const { xPercent, yPercent } = floorPosition(DEFAULT_CAT_POSITION);
     expect(xPercent).toBeGreaterThan(0);
     expect(xPercent).toBeLessThan(100);
-    expect(yPercent).toBeGreaterThan(FLOOR_REGION.top * 100);
+    expect(yPercent).toBeGreaterThan(FLOOR_TOP_PERCENT.yPercent);
     expect(yPercent).toBeLessThan(100);
   });
 
-  it('places the left face entirely left of the right face, meeting at the center', () => {
-    const leftFar = wallPosition({ face: 'left', row: 0, col: WALL_COLS - 1 });
-    const rightNear = wallPosition({ face: 'right', row: 0, col: 0 });
-    expect(leftFar.xPercent).toBeLessThan(50);
-    expect(rightNear.xPercent).toBeGreaterThan(50);
+  it('places the left face entirely left of (or at) the room\'s horizontal center, and the right face at or right of it', () => {
+    const leftFaceOuterEdge = wallPosition({ face: 'left', row: 0, col: WALL_COLS - 1 });
+    const leftFaceNearCorner = wallPosition({ face: 'left', row: 0, col: 0 });
+    const rightFaceOuterEdge = wallPosition({ face: 'right', row: 0, col: WALL_COLS - 1 });
+    const rightFaceNearCorner = wallPosition({ face: 'right', row: 0, col: 0 });
+
+    expect(leftFaceOuterEdge.xPercent).toBeLessThan(leftFaceNearCorner.xPercent);
+    expect(leftFaceNearCorner.xPercent).toBeLessThanOrEqual(50);
+    expect(rightFaceOuterEdge.xPercent).toBeGreaterThan(rightFaceNearCorner.xPercent);
+    expect(rightFaceNearCorner.xPercent).toBeGreaterThanOrEqual(50);
+  });
+
+  it('keeps the col=0 seam of both wall faces exactly on the room\'s vertical center line, for every row', () => {
+    // A wall's row (height up the wall) is a pure vertical shift with no
+    // horizontal skew, so column 0's edge -- nearest the back corner --
+    // sits at exactly the same X for every row: the floor's own top
+    // vertex X (the room's horizontal center), not just approximately.
+    for (const row of [0, Math.floor(WALL_ROWS / 2), WALL_ROWS - 1]) {
+      const leftFaceInnerEdge = wallCellRect({ face: 'left', row, col: 0 });
+      const rightFaceInnerEdge = wallCellRect({ face: 'right', row, col: 0 });
+      expect(leftFaceInnerEdge.leftPercent + leftFaceInnerEdge.widthPercent).toBeCloseTo(FLOOR_TOP_PERCENT.xPercent, 8);
+      expect(rightFaceInnerEdge.leftPercent).toBeCloseTo(FLOOR_TOP_PERCENT.xPercent, 8);
+    }
   });
 });
 
@@ -122,62 +169,76 @@ describe('isInHangableWallZone', () => {
   });
 });
 
-describe('createGridCellRect', () => {
-  it('returns each cell\'s bounding box within a simple 2x2 region', () => {
-    const rect = createGridCellRect({ rows: 2, cols: 2, top: 0, left: 0, width: 1, height: 1 });
-    expect(rect({ row: 0, col: 0 })).toEqual({ leftPercent: 0, topPercent: 0, widthPercent: 50, heightPercent: 50 });
-    expect(rect({ row: 1, col: 1 })).toEqual({ leftPercent: 50, topPercent: 50, widthPercent: 50, heightPercent: 50 });
-  });
-
-  it('agrees with createGridProjection about where a cell center is', () => {
-    const project = createGridProjection(FLOOR_REGION);
-    const rect = floorCellRect({ row: 3, col: 2 });
-    const center = project({ row: 3, col: 2 });
-    expect(rect.leftPercent + rect.widthPercent / 2).toBeCloseTo(center.xPercent, 10);
-    expect(rect.topPercent + rect.heightPercent / 2).toBeCloseTo(center.yPercent, 10);
-  });
-
-  it('sizes wall cells using a single face\'s region dimensions, not the floor\'s', () => {
-    const rect = wallCellRect({ face: 'left', row: 0, col: 0 });
-    expect(rect.widthPercent).toBeCloseTo((WALL_FACE_REGIONS.left.width / WALL_COLS) * 100, 10);
-    expect(rect.heightPercent).toBeCloseTo((WALL_FACE_REGIONS.left.height / WALL_ROWS) * 100, 10);
-  });
-
-  it('gives the two faces the same shape but different screen positions', () => {
+describe('wallCellRect', () => {
+  it('gives the two faces the same shape but different (mirrored) screen positions', () => {
     const left = wallCellRect({ face: 'left', row: 2, col: 3 });
     const right = wallCellRect({ face: 'right', row: 2, col: 3 });
     expect(left.widthPercent).toBeCloseTo(right.widthPercent, 10);
     expect(left.heightPercent).toBeCloseTo(right.heightPercent, 10);
     expect(left.leftPercent).not.toBeCloseTo(right.leftPercent, 5);
   });
+
+  it('keeps every wall row the same height regardless of column (row is a pure vertical shift)', () => {
+    const near = wallCellRect({ face: 'left', row: 0, col: 0 });
+    const far = wallCellRect({ face: 'left', row: 0, col: WALL_COLS - 1 });
+    expect(near.heightPercent).toBeCloseTo(far.heightPercent, 8);
+  });
 });
 
 describe('getFootprintScreenRect', () => {
   it('matches a single cell\'s own rect for a 1x1 footprint', () => {
     const rect = getFootprintScreenRect(floorCellRect, { row: 2, col: 3 }, { width: 1, height: 1 });
-    expect(rect).toEqual(floorCellRect({ row: 2, col: 3 }));
+    const single = floorCellRect({ row: 2, col: 3 });
+    expect(rect.leftPercent).toBeCloseTo(single.leftPercent, 8);
+    expect(rect.topPercent).toBeCloseTo(single.topPercent, 8);
+    expect(rect.widthPercent).toBeCloseTo(single.widthPercent, 8);
+    expect(rect.heightPercent).toBeCloseTo(single.heightPercent, 8);
   });
 
-  it('spans from the anchor\'s top-left to the far cell\'s bottom-right for a multi-tile footprint', () => {
-    const anchorRect = floorCellRect({ row: 2, col: 3 });
-    const farRect = floorCellRect({ row: 3, col: 4 }); // anchor + (2x2 - 1) in both dims
+  // The expected native-px values below (verified independently with a
+  // standalone script, not just re-derived from the implementation) show
+  // why a footprint's bounding box can't be built from just its anchor
+  // and far tile's own rects: diamonds tessellate diagonally, so
+  // adjacent tiles along a row overlap in screen space. A 2-wide, 1-deep
+  // floor footprint measures 96 native px wide -- not 128 (2x a single
+  // tile's own 64px width) -- because the tessellation reduces the
+  // "unique" additional span each further tile contributes.
+  it('spans a 1-row-tall, 2-column-wide floor footprint to its true tessellated width, not naive 2x scaling', () => {
+    const rect = getFootprintScreenRect(floorCellRect, { row: 0, col: 3 }, { width: 2, height: 1 });
+    expect(rect.leftPercent).toBeCloseTo((320 / 512) * 100, 6);
+    expect(rect.topPercent).toBeCloseTo((240.625 / 448) * 100, 6);
+    expect(rect.widthPercent).toBeCloseTo((96 / 512) * 100, 6);
+    expect(rect.heightPercent).toBeCloseTo((47.625 / 448) * 100, 6);
+  });
+
+  it('spans a footprint covering both multiple rows AND multiple columns to its true diamond-tessellation bounding box', () => {
+    // A 2x2 footprint's own bounding box is NOT simply the anchor tile's
+    // rect combined with the far tile's rect -- a lower row reaches
+    // further to one side than the anchor row alone would suggest. This
+    // is exactly the bug the old rectangular-grid math had no way to
+    // hit (it had no row/col cross-coupling), and exactly what
+    // getFootprintScreenRect's per-cell union has to get right for
+    // footprints like the plant's 2x2.
     const rect = getFootprintScreenRect(floorCellRect, { row: 2, col: 3 }, { width: 2, height: 2 });
-
-    expect(rect.leftPercent).toBeCloseTo(anchorRect.leftPercent, 10);
-    expect(rect.topPercent).toBeCloseTo(anchorRect.topPercent, 10);
-    expect(rect.widthPercent).toBeCloseTo(farRect.leftPercent + farRect.widthPercent - anchorRect.leftPercent, 10);
-    expect(rect.heightPercent).toBeCloseTo(farRect.topPercent + farRect.heightPercent - anchorRect.topPercent, 10);
-    // Sanity check against the plain single-cell width/height: a 2x2
-    // footprint should measure out to exactly twice one cell's size.
-    expect(rect.widthPercent).toBeCloseTo(anchorRect.widthPercent * 2, 10);
-    expect(rect.heightPercent).toBeCloseTo(anchorRect.heightPercent * 2, 10);
+    expect(rect.leftPercent).toBeCloseTo((224 / 512) * 100, 6);
+    expect(rect.topPercent).toBeCloseTo((272.375 / 448) * 100, 6);
+    expect(rect.widthPercent).toBeCloseTo((128 / 512) * 100, 6);
+    expect(rect.heightPercent).toBeCloseTo((63.5 / 448) * 100, 6);
   });
 
+  // Unlike the floor, a wall's row axis is a pure vertical shift with no
+  // horizontal skew, so a wide (multi-column) wall footprint's WIDTH
+  // does scale naively (4 columns = 4x a single cell's width). Its
+  // HEIGHT does not, though: each additional column also shifts that
+  // column's vertical band further down the isometric slope, so a wide
+  // single-row wall footprint's bounding box is taller than any one of
+  // its own cells.
   it('works with a face-bound wall cell rect function for a wide wall footprint', () => {
     const rect = getFootprintScreenRect(wallCellRect, { face: 'left', row: 0, col: 0 }, { width: 4, height: 1 });
     const singleCell = wallCellRect({ face: 'left', row: 0, col: 0 });
-    expect(rect.widthPercent).toBeCloseTo(singleCell.widthPercent * 4, 10);
-    expect(rect.heightPercent).toBeCloseTo(singleCell.heightPercent, 10);
+    expect(rect.widthPercent).toBeCloseTo(singleCell.widthPercent * 4, 6);
+    expect(rect.heightPercent).toBeCloseTo((95.66666666666666 / 448) * 100, 6);
+    expect(rect.heightPercent).toBeGreaterThan(singleCell.heightPercent);
   });
 });
 
@@ -188,12 +249,8 @@ describe('centerOf', () => {
   });
 });
 
-describe('DEFAULT_CAT_POSITION and ROOM_ASPECT_RATIO', () => {
+describe('DEFAULT_CAT_POSITION', () => {
   it('defaults the cat to the center of the floor grid', () => {
     expect(DEFAULT_CAT_POSITION).toEqual(centerOf(FLOOR_ROWS, FLOOR_COLS));
-  });
-
-  it('derives the room aspect ratio from the floor region so cells render square', () => {
-    expect(ROOM_ASPECT_RATIO).toBeCloseTo((FLOOR_COLS * FLOOR_REGION.height) / FLOOR_ROWS, 10);
   });
 });
