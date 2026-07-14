@@ -4,6 +4,7 @@ import { UploadModal } from './upload/UploadModal.jsx';
 import { BoopsDisplay } from './ui/BoopsDisplay.jsx';
 import { RoomViewport } from './room/RoomViewport.jsx';
 import { useRoomEditor, EditorMode } from './room/useRoomEditor.js';
+import { useCatWander } from './cat/useCatWander.js';
 import { InventoryPanel } from './inventory/InventoryPanel.jsx';
 import './App.css';
 
@@ -26,6 +27,9 @@ export default function App() {
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
 
   const roomEditor = useRoomEditor({ placedItems, placeItem, movePlacedItem, flipPlacedItem, deletePlacedItem });
+  // Paused (not stopped mid-stride) while the cat needs attention -- see
+  // useCatWander.js for why an in-flight walk is still allowed to finish.
+  const catWander = useCatWander({ placedItems, paused: needsAttention });
 
   function handleUploadResult(result) {
     addBoops(result.boops);
@@ -58,6 +62,7 @@ export default function App() {
       <RoomViewport
         catHappiness={cat.happiness}
         catNeedsAttention={needsAttention}
+        catWander={catWander}
         placedItems={placedItems}
         editMode={editMode}
         roomEditor={roomEditor}

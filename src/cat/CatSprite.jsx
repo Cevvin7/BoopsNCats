@@ -3,17 +3,13 @@ import { useSpriteFrame } from './useSpriteFrame.js';
 import { CAT_SPRITE_SHEET_URL, CAT_SHEET_WIDTH, CAT_SHEET_HEIGHT } from './spriteAnimation.js';
 import './CatSprite.css';
 
-// happy -> the sheet's sitting idle loop; needsAttention -> its dedicated
-// "wants a walk" animation. The sheet also has a Walking animation, not
-// used yet since the cat doesn't move around the grid until a future phase.
-const ANIMATION_FOR_STATE = {
-  happy: 'SitIdle',
-  needsAttention: 'NeedsExercise',
-};
-
-export function CatSprite({ happiness, needsAttention }) {
-  const animationName = needsAttention ? ANIMATION_FOR_STATE.needsAttention : ANIMATION_FOR_STATE.happy;
-  const frame = useSpriteFrame(animationName);
+// needsAttention overrides whatever the wander system (useCatWander) was
+// showing with a dedicated "wants a walk" pose -- `animationName`
+// (SitIdle/StandIdle while idle, Walking while wandering) only applies
+// once that's resolved.
+export function CatSprite({ happiness, needsAttention, animationName }) {
+  const displayedAnimation = needsAttention ? 'NeedsExercise' : animationName;
+  const frame = useSpriteFrame(displayedAnimation);
   if (!frame) return null;
 
   const statusText = needsAttention ? 'Needs attention!' : `Happy (${happiness}/${MAX_HAPPINESS})`;

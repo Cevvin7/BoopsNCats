@@ -3,6 +3,7 @@ import {
   isValidPlacementPosition,
   getValidPositions,
   getFootprintTiles,
+  getOccupiedFloorTiles,
   regionForPlacementType,
 } from './placement.js';
 import { PlacementType, ITEM_CATALOG, getFootprint } from './itemCatalog.js';
@@ -198,6 +199,32 @@ describe('isValidPlacementPosition: excludePlacedItemId (for moving)', () => {
         excludePlacedItemId: 'a',
       }),
     ).toBe(true);
+  });
+});
+
+describe('getOccupiedFloorTiles', () => {
+  it('returns an empty set when there are no placed items', () => {
+    expect(getOccupiedFloorTiles([])).toEqual(new Set());
+  });
+
+  it('includes every tile of a multi-tile floor footprint, not just its anchor', () => {
+    const placedItems = [{ id: 'a', itemId: 'plant', row: 4, col: 4, flipped: false }]; // 2x2
+    const occupied = getOccupiedFloorTiles(placedItems);
+    expect(occupied).toEqual(new Set(['4,4', '4,5', '5,4', '5,5']));
+  });
+
+  it('excludes wall-mounted items entirely -- they occupy no floor tile', () => {
+    const placedItems = [{ id: 'a', itemId: 'shelf', row: 0, col: 0, face: 'left', flipped: false }];
+    expect(getOccupiedFloorTiles(placedItems)).toEqual(new Set());
+  });
+
+  it('unions tiles across multiple placed floor items', () => {
+    const placedItems = [
+      { id: 'a', itemId: 'bookshelf', row: 0, col: 0, flipped: false }, // 2x1
+      { id: 'b', itemId: 'plant', row: 5, col: 5, flipped: false }, // 2x2
+    ];
+    const occupied = getOccupiedFloorTiles(placedItems);
+    expect(occupied).toEqual(new Set(['0,0', '0,1', '5,5', '5,6', '6,5', '6,6']));
   });
 });
 
