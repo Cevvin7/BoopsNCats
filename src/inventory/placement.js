@@ -41,6 +41,28 @@ function getPlacedItemTiles(placedItem) {
   return getFootprintTiles(placedItem, getFootprint(catalogEntry));
 }
 
+function tileKey({ row, col }) {
+  return `${row},${col}`;
+}
+
+/**
+ * Every floor tile currently covered by a placed item's own footprint, as
+ * a Set of "row,col" keys. Wall-mounted items don't occupy any floor
+ * tile, so they're excluded entirely. Used by the cat's wander-
+ * destination picker to avoid choosing a tile that's actually furniture.
+ */
+export function getOccupiedFloorTiles(placedItems) {
+  const occupied = new Set();
+  for (const placed of placedItems) {
+    const catalogEntry = ITEM_CATALOG[placed.itemId];
+    if (regionForPlacementType(catalogEntry.placementType) !== 'floor') continue;
+    for (const tile of getFootprintTiles(placed, getFootprint(catalogEntry))) {
+      occupied.add(tileKey(tile));
+    }
+  }
+  return occupied;
+}
+
 /**
  * A position (the footprint's anchor/top-left tile) is valid for a given
  * placementType if:

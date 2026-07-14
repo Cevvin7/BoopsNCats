@@ -83,6 +83,18 @@ export function floorPosition({ row, col }) {
   return toPercentPoint(floorCorner({ row: row + 0.5, col: col + 0.5 }));
 }
 
+// Unlike floorPosition (always a cell's center), this projects a raw
+// continuous (row, col) point -- fractional values included -- straight
+// through the isometric transform with no +0.5 centering. Since that
+// transform is linear, any point with fractional parts in [0, 1) maps to
+// somewhere inside that tile's own diamond, not just its bounding box.
+// That's what makes it possible to walk a moving entity to an "organic"
+// point within a tile (not just its center) and to any point in between
+// two tiles while it's still in transit, using this exact same formula.
+export function floorPointPosition(point) {
+  return toPercentPoint(floorCorner(point));
+}
+
 export function wallPosition({ face, row, col }) {
   return toPercentPoint(wallCorner({ face, row: row + 0.5, col: col + 0.5 }));
 }

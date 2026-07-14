@@ -5,7 +5,7 @@ import { ITEM_CATALOG, getFootprint } from '../inventory/itemCatalog.js';
 import { regionForPlacementType } from '../inventory/placement.js';
 import { getPlacedFace } from '../inventory/placedItemsModel.js';
 import { TileGridOverlay } from './TileGridOverlay.jsx';
-import { DEFAULT_CAT_POSITION, floorCellRect, wallCellRect, getFootprintScreenRect } from './roomGrid.js';
+import { floorCellRect, wallCellRect, floorPointPosition, getFootprintScreenRect } from './roomGrid.js';
 import { sortByDepth } from './depthSort.js';
 import { CAT_SPRITE_NATIVE_PX, ROOM_ART_NATIVE_WIDTH_PX, ROOM_ART_NATIVE_HEIGHT_PX, PIXEL_SCALE } from './pixelScale.js';
 import './Room.css';
@@ -81,14 +81,16 @@ function contactYPercent(rect) {
   return rect.region === 'wall' ? rect.topPercent : rect.topPercent + rect.heightPercent;
 }
 
-export function Room({ catHappiness, catNeedsAttention, placedItems, editMode, roomEditor }) {
+export function Room({ catHappiness, catNeedsAttention, catWander, placedItems, editMode, roomEditor }) {
   const catSpritePx = CAT_SPRITE_NATIVE_PX * PIXEL_SCALE;
 
   // The cat isn't meant to fill its whole tile -- its sprite sheet frame is
   // a real, fixed 32x32 native resolution (see pixelScale.js) -- so it
   // keeps its own native pixel size rather than the footprint-rect sizing
-  // placed items use below.
-  const catScreenRect = { ...getFootprintScreenRect(floorCellRect, DEFAULT_CAT_POSITION, { width: 1, height: 1 }), region: 'floor' };
+  // placed items use below. Its position is continuous, not tile-snapped
+  // (useCatWander.js), so it's projected with floorPointPosition (a raw
+  // point) rather than a tile's own cell rect.
+  const catPoint = floorPointPosition(catWander.position);
 
   const activeRegion = roomEditor.activePlacementType
     ? regionForPlacementType(roomEditor.activePlacementType)
@@ -107,19 +109,25 @@ export function Room({ catHappiness, catNeedsAttention, placedItems, editMode, r
   // once movement lands, with no rework here.
   const catEntity = {
     key: 'cat',
-    depth: contactYPercent(catScreenRect),
+    // Recomputed from the cat's live interpolated point every render, not
+    // its destination tile -- while it's mid-walk this updates every
+    // animation frame (useCatWander's position state), so it correctly
+    // slots in front of/behind furniture as it actually crosses the room,
+    // not just once it arrives.
+    depth: catPoint.yPercent,
     node: (
       <div
         key="cat"
         className="room-entity"
         style={{
-          left: `${catScreenRect.leftPercent}%`,
-          top: `${catScreenRect.topPercent}%`,
+          left: `${catPoint.xPercent}%`,
+          bottom: `${100 - catPoint.yPercent}%`,
           width: `${catSpritePx}px`,
           height: `${catSpritePx}px`,
+          transform: 'translateX(-50%)',
         }}
       >
-        <CatSprite happiness={catHappiness} needsAttention={catNeedsAttention} />
+        <CatSprite happiness={catHappiness} needsAttention={catNeedsAttention} animationName={catWander.animationName} />
       </div>
     ),
   };

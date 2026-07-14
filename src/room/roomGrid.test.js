@@ -9,6 +9,7 @@ import {
   WALL_COLS,
   DEFAULT_CAT_POSITION,
   floorPosition,
+  floorPointPosition,
   wallPosition,
   isValidFloorPosition,
   isValidWallPosition,
@@ -113,6 +114,37 @@ describe('floorPosition / wallPosition', () => {
       expect(leftFaceInnerEdge.leftPercent + leftFaceInnerEdge.widthPercent).toBeCloseTo(FLOOR_TOP_PERCENT.xPercent, 8);
       expect(rightFaceInnerEdge.leftPercent).toBeCloseTo(FLOOR_TOP_PERCENT.xPercent, 8);
     }
+  });
+});
+
+describe('floorPointPosition', () => {
+  it('projects the raw grid origin to the floor diamond\'s measured top vertex, unlike floorPosition (which centers)', () => {
+    const point = floorPointPosition({ row: 0, col: 0 });
+    expect(point.xPercent).toBeCloseTo(FLOOR_TOP_PERCENT.xPercent, 8);
+    expect(point.yPercent).toBeCloseTo(FLOOR_TOP_PERCENT.yPercent, 8);
+
+    // floorPosition of the same {row: 0, col: 0}, by contrast, is that
+    // cell's CENTER -- a different, later point.
+    const center = floorPosition({ row: 0, col: 0 });
+    expect(center.yPercent).toBeGreaterThan(point.yPercent);
+  });
+
+  it('places a fractional point strictly between the tile grid lines it interpolates across', () => {
+    const nearCorner = floorPointPosition({ row: 2, col: 3 });
+    const farCorner = floorPointPosition({ row: 3, col: 4 });
+    const midpoint = floorPointPosition({ row: 2.5, col: 3.5 });
+
+    expect(midpoint.xPercent).toBeCloseTo((nearCorner.xPercent + farCorner.xPercent) / 2, 8);
+    expect(midpoint.yPercent).toBeCloseTo((nearCorner.yPercent + farCorner.yPercent) / 2, 8);
+  });
+
+  it('keeps any point with fractional parts in [0, 1) within that single tile\'s own bounding box', () => {
+    const tile = floorCellRect({ row: 4, col: 2 });
+    const point = floorPointPosition({ row: 4.37, col: 2.81 });
+    expect(point.xPercent).toBeGreaterThanOrEqual(tile.leftPercent);
+    expect(point.xPercent).toBeLessThanOrEqual(tile.leftPercent + tile.widthPercent);
+    expect(point.yPercent).toBeGreaterThanOrEqual(tile.topPercent);
+    expect(point.yPercent).toBeLessThanOrEqual(tile.topPercent + tile.heightPercent);
   });
 });
 
