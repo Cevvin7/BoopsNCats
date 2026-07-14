@@ -24,8 +24,7 @@
   gap: 0.75rem;
 }
 
-.edit-mode-toggle,
-.pixel-scale-toggle {
+.edit-mode-toggle {
   background: #8d99ae;
   color: #2b2d42;
   border: none;
@@ -36,8 +35,7 @@
   cursor: pointer;
 }
 
-.edit-mode-toggle:hover,
-.pixel-scale-toggle:hover {
+.edit-mode-toggle:hover {
   background: #edf2f4;
 }
 
