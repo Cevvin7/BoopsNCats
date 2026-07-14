@@ -8,6 +8,9 @@
   border-radius: 4px;
   padding: 0;
   cursor: pointer;
+  image-rendering: pixelated;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
 }
 
 .placed-item-sprite:disabled {

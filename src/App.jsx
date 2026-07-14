@@ -4,6 +4,7 @@ import { GpxUpload } from './upload/GpxUpload.jsx';
 import { BoopsDisplay } from './ui/BoopsDisplay.jsx';
 import { Room } from './room/Room.jsx';
 import { useRoomEditor, EditorMode } from './room/useRoomEditor.js';
+import { usePixelScale } from './room/usePixelScale.js';
 import { InventoryPanel } from './inventory/InventoryPanel.jsx';
 import './App.css';
 
@@ -27,6 +28,7 @@ export default function App() {
   } = useGameState();
   const [lastUpload, setLastUpload] = useState(null);
   const [editMode, setEditMode] = useState(false);
+  const { scale, isDoubled, toggle: togglePixelScale } = usePixelScale();
 
   const roomEditor = useRoomEditor({ placedItems, placeItem, movePlacedItem, flipPlacedItem, deletePlacedItem });
 
@@ -48,6 +50,14 @@ export default function App() {
       <header className="app-header">
         <h1>BoopsNCats</h1>
         <div className="app-header-actions">
+          <button
+            type="button"
+            className="pixel-scale-toggle"
+            onClick={togglePixelScale}
+            title="Toggle between 1x and 2x pixel-perfect scaling"
+          >
+            {isDoubled ? '2x' : '1x'}
+          </button>
           <button type="button" className="edit-mode-toggle" onClick={toggleEditMode}>
             {editMode ? 'Done' : 'Edit'}
           </button>
@@ -61,6 +71,7 @@ export default function App() {
         placedItems={placedItems}
         editMode={editMode}
         roomEditor={roomEditor}
+        scale={scale}
       />
 
       {editMode && (

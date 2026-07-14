@@ -1,8 +1,17 @@
+/* The room now renders at a fixed pixel size (an exact integer multiple
+   of the source art's 512x448, chosen by the pixel-scale toggle) instead
+   of a fluid width -- that's what makes crisp integer scaling possible.
+   This wrapper lets it scroll horizontally rather than overflow/clip on
+   viewports narrower than the room, especially in 2x mode. */
+.room-scroll {
+  width: 100%;
+  overflow-x: auto;
+}
+
 .room {
   position: relative;
-  width: 100%;
-  max-width: 480px;
   margin: 0 auto;
+  flex-shrink: 0;
 }
 
 .room-art-layer {

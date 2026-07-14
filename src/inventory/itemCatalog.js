@@ -46,4 +46,14 @@ export const ITEM_CATALOG = {
     footprint: { width: 4, height: 1 },
     color: '#c9a15a',
   },
+  bookshelfTall: {
+    id: 'bookshelfTall',
+    name: 'Tall Bookshelf',
+    placementType: PlacementType.ON_FLOOR_AGAINST_WALL,
+    footprint: { width: 1, height: 1 },
+    // Real art not in the repo yet -- spriteUrl falls back to `color`
+    // automatically (see PlacedItemSprite/InventorySwatch) until it lands.
+    spriteUrl: `${import.meta.env.BASE_URL}sprites/furniture/furniture-bookshelf2xtall.png`,
+    color: '#6b4a30',
+  },
 };
