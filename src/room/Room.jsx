@@ -6,6 +6,7 @@ import { regionForPlacementType } from '../inventory/placement.js';
 import { getPlacedFace } from '../inventory/placedItemsModel.js';
 import { TileGridOverlay } from './TileGridOverlay.jsx';
 import { DEFAULT_CAT_POSITION, floorCellRect, wallCellRect, getFootprintScreenRect } from './roomGrid.js';
+import { sortByDepth } from './depthSort.js';
 import { CAT_SPRITE_NATIVE_PX, ROOM_ART_NATIVE_WIDTH_PX, ROOM_ART_NATIVE_HEIGHT_PX, PIXEL_SCALE } from './pixelScale.js';
 import './Room.css';
 
@@ -63,6 +64,23 @@ function screenRectForPlacedItem(placedItem) {
   return { ...getFootprintScreenRect(floorCellRect, placedItem, footprint), region };
 }
 
+// The Y coordinate (room-relative percent) of an entity's own "contact
+// point" with the room -- the bottom edge for floor entities (they stand
+// on the floor, so their front-most point is what should occlude/be
+// occluded by neighbors) and the top edge for wall-mounted ones (they
+// hang from their mount point instead, with nothing below them to anchor
+// to). This is also exactly the Y each entity is already rendered at
+// (see the `style` blocks below), so depth-sorting by it is just "draw
+// entities in the same back-to-front order their own anchor points are
+// already in" -- no separate/duplicate notion of depth to keep in sync.
+// It works uniformly across floor items, wall items, and the cat without
+// special-casing any of them: the wall's Y range sits entirely above the
+// floor's (see roomGrid.js), so wall-mounted items always land behind
+// every floor entity automatically, just from the numbers.
+function contactYPercent(rect) {
+  return rect.region === 'wall' ? rect.topPercent : rect.topPercent + rect.heightPercent;
+}
+
 export function Room({ catHappiness, catNeedsAttention, placedItems, editMode, roomEditor }) {
   const catSpritePx = CAT_SPRITE_NATIVE_PX * PIXEL_SCALE;
 
@@ -70,7 +88,7 @@ export function Room({ catHappiness, catNeedsAttention, placedItems, editMode, r
   // a real, fixed 32x32 native resolution (see pixelScale.js) -- so it
   // keeps its own native pixel size rather than the footprint-rect sizing
   // placed items use below.
-  const catScreenRect = getFootprintScreenRect(floorCellRect, DEFAULT_CAT_POSITION, { width: 1, height: 1 });
+  const catScreenRect = { ...getFootprintScreenRect(floorCellRect, DEFAULT_CAT_POSITION, { width: 1, height: 1 }), region: 'floor' };
 
   const activeRegion = roomEditor.activePlacementType
     ? regionForPlacementType(roomEditor.activePlacementType)
@@ -79,63 +97,84 @@ export function Room({ catHappiness, catNeedsAttention, placedItems, editMode, r
   const menuItem = roomEditor.menuPlacedItem;
   const menuScreenRect = menuItem ? screenRectForPlacedItem(menuItem) : null;
 
+  // One combined list of every positioned entity in the scene -- the cat
+  // and every placed item -- so they can be depth-sorted together instead
+  // of the cat always drawing first and items always drawing in whatever
+  // order they were placed. sortByDepth doesn't know or care that these
+  // are cats and furniture; it just orders by the numeric depth each
+  // entity reports (see contactYPercent above), which is what makes this
+  // the same utility that'll place a *moving* cat correctly among items
+  // once movement lands, with no rework here.
+  const catEntity = {
+    key: 'cat',
+    depth: contactYPercent(catScreenRect),
+    node: (
+      <div
+        key="cat"
+        className="room-entity"
+        style={{
+          left: `${catScreenRect.leftPercent}%`,
+          top: `${catScreenRect.topPercent}%`,
+          width: `${catSpritePx}px`,
+          height: `${catSpritePx}px`,
+        }}
+      >
+        <CatSprite happiness={catHappiness} needsAttention={catNeedsAttention} />
+      </div>
+    ),
+  };
+
+  const itemEntities = placedItems.map((item) => {
+    const catalogEntry = ITEM_CATALOG[item.itemId];
+    const rect = screenRectForPlacedItem(item);
+    const widthPx = Math.round((rect.widthPercent / 100) * ROOM_WIDTH_PX);
+    const heightPx =
+      catalogEntry.spriteHeightPx != null
+        ? Math.round(catalogEntry.spriteHeightPx * PIXEL_SCALE)
+        : Math.round((rect.heightPercent / 100) * ROOM_HEIGHT_PX);
+
+    // Anchored bottom-center: horizontally centered on the footprint's
+    // own center (via left% + translateX(-50%), so it stays centered
+    // regardless of the box's actual pixel width), vertically pinned at
+    // the footprint's contact edge with the room -- the bottom for floor
+    // items (they stand on the floor, so a sprite taller than its
+    // footprint rises UP toward the wall instead of sinking down past
+    // its own tile) and the top for wall items (they hang from their
+    // mount point instead).
+    const style = {
+      left: `${rect.leftPercent + rect.widthPercent / 2}%`,
+      width: `${widthPx}px`,
+      height: `${heightPx}px`,
+      transform: 'translateX(-50%)',
+    };
+    if (rect.region === 'wall') {
+      style.top = `${rect.topPercent}%`;
+    } else {
+      style.bottom = `${100 - (rect.topPercent + rect.heightPercent)}%`;
+    }
+
+    return {
+      key: item.id,
+      depth: contactYPercent(rect),
+      node: (
+        <div key={item.id} className="room-entity" style={style}>
+          <PlacedItemSprite
+            placedItem={item}
+            onTap={editMode ? () => roomEditor.tapPlacedItem(item.id) : undefined}
+          />
+        </div>
+      ),
+    };
+  });
+
+  const sceneEntities = sortByDepth([catEntity, ...itemEntities], (entity) => entity.depth);
+
   return (
     <div className="room" style={{ width: `${ROOM_WIDTH_PX}px`, height: `${ROOM_HEIGHT_PX}px` }}>
       <img className="room-art-layer" src={FLOOR_ART_URL} alt="" />
       <img className="room-art-layer" src={WALL_ART_URL} alt="" />
 
-      <div className="room-entities">
-        <div
-          className="room-entity"
-          style={{
-            left: `${catScreenRect.leftPercent}%`,
-            top: `${catScreenRect.topPercent}%`,
-            width: `${catSpritePx}px`,
-            height: `${catSpritePx}px`,
-          }}
-        >
-          <CatSprite happiness={catHappiness} needsAttention={catNeedsAttention} />
-        </div>
-
-        {placedItems.map((item) => {
-          const catalogEntry = ITEM_CATALOG[item.itemId];
-          const rect = screenRectForPlacedItem(item);
-          const widthPx = Math.round((rect.widthPercent / 100) * ROOM_WIDTH_PX);
-          const heightPx =
-            catalogEntry.spriteHeightPx != null
-              ? Math.round(catalogEntry.spriteHeightPx * PIXEL_SCALE)
-              : Math.round((rect.heightPercent / 100) * ROOM_HEIGHT_PX);
-
-          // Anchored bottom-center: horizontally centered on the
-          // footprint's own center (via left% + translateX(-50%), so it
-          // stays centered regardless of the box's actual pixel width),
-          // vertically pinned at the footprint's contact edge with the
-          // room -- the bottom for floor items (they stand on the floor,
-          // so a sprite taller than its footprint rises UP toward the
-          // wall instead of sinking down past its own tile) and the top
-          // for wall items (they hang from their mount point instead).
-          const style = {
-            left: `${rect.leftPercent + rect.widthPercent / 2}%`,
-            width: `${widthPx}px`,
-            height: `${heightPx}px`,
-            transform: 'translateX(-50%)',
-          };
-          if (rect.region === 'wall') {
-            style.top = `${rect.topPercent}%`;
-          } else {
-            style.bottom = `${100 - (rect.topPercent + rect.heightPercent)}%`;
-          }
-
-          return (
-            <div key={item.id} className="room-entity" style={style}>
-              <PlacedItemSprite
-                placedItem={item}
-                onTap={editMode ? () => roomEditor.tapPlacedItem(item.id) : undefined}
-              />
-            </div>
-          );
-        })}
-      </div>
+      <div className="room-entities">{sceneEntities.map((entity) => entity.node)}</div>
 
       {editMode && roomEditor.isSelectingTile && (
         <TileGridOverlay
