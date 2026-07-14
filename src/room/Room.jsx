@@ -32,7 +32,7 @@ export const ROOM_HEIGHT_PX = ROOM_ART_NATIVE_HEIGHT_PX * PIXEL_SCALE;
 
 // Every entity (cat, placed items) is positioned from the percentage-based
 // roomGrid projection — percentages of the now-fixed-pixel room are just
-// arithmetic, so position math didn't need to change. Footprint SIZE has
+// arithmetic, so position math didn't need to change. Footprint WIDTH has
 // to come from that same cell-rect percentage (not a hardcoded
 // native-pixel guess): the floor grid's cells (512/8 = 64px wide at
 // native res) are twice as wide as the wall grid's cells (512/2/8 = 32px
@@ -41,6 +41,16 @@ export const ROOM_HEIGHT_PX = ROOM_ART_NATIVE_HEIGHT_PX * PIXEL_SCALE;
 // item's real footprint rect (the same source of truth TileGridOverlay
 // uses for tile highlighting) into whole CSS pixels against the fixed
 // room size instead.
+//
+// HEIGHT is deliberately not part of that same footprint-rect math.
+// footprint.height only describes how much floor/wall depth an item's
+// base occupies for placement/collision purposes -- it says nothing
+// about how tall the item's own art actually is (a tall bookshelf still
+// only occupies one tile of depth even though it visually rises well
+// above it). Catalog entries can declare their own native-pixel
+// spriteHeightPx for this; entries that don't (no real art yet) fall
+// back to the old footprint-height-implies-canvas-height assumption so
+// they keep rendering exactly as before.
 function screenRectForPlacedItem(placedItem) {
   const catalogEntry = ITEM_CATALOG[placedItem.itemId];
   const footprint = getFootprint(catalogEntry);
@@ -88,17 +98,28 @@ export function Room({ catHappiness, catNeedsAttention, placedItems, editMode, r
         </div>
 
         {placedItems.map((item) => {
+          const catalogEntry = ITEM_CATALOG[item.itemId];
           const rect = screenRectForPlacedItem(item);
           const widthPx = Math.round((rect.widthPercent / 100) * ROOM_WIDTH_PX);
-          const heightPx = Math.round((rect.heightPercent / 100) * ROOM_HEIGHT_PX);
+          const heightPx =
+            catalogEntry.spriteHeightPx != null
+              ? Math.round(catalogEntry.spriteHeightPx * PIXEL_SCALE)
+              : Math.round((rect.heightPercent / 100) * ROOM_HEIGHT_PX);
 
-          // Floor items (freeStand, onFloorAgainstWall) are anchored by
-          // their BASE, not their top -- CSS `bottom` pins the footprint's
-          // bottom edge in place so a sprite taller than one tile (e.g. a
-          // tall bookshelf) would rise up toward the wall instead of
-          // sinking down past its own floor tile. Wall-mounted items have
-          // no floor to stand on, so they keep a top-left anchor instead.
-          const style = { left: `${rect.leftPercent}%`, width: `${widthPx}px`, height: `${heightPx}px` };
+          // Anchored bottom-center: horizontally centered on the
+          // footprint's own center (via left% + translateX(-50%), so it
+          // stays centered regardless of the box's actual pixel width),
+          // vertically pinned at the footprint's contact edge with the
+          // room -- the bottom for floor items (they stand on the floor,
+          // so a sprite taller than its footprint rises UP toward the
+          // wall instead of sinking down past its own tile) and the top
+          // for wall items (they hang from their mount point instead).
+          const style = {
+            left: `${rect.leftPercent + rect.widthPercent / 2}%`,
+            width: `${widthPx}px`,
+            height: `${heightPx}px`,
+            transform: 'translateX(-50%)',
+          };
           if (rect.region === 'wall') {
             style.top = `${rect.topPercent}%`;
           } else {
