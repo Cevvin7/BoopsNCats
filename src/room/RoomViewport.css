@@ -1,0 +1,32 @@
+.room-viewport-frame {
+  position: relative;
+  margin: 0 auto;
+  flex-shrink: 0;
+}
+
+.room-viewport-window {
+  position: absolute;
+  overflow: hidden;
+  cursor: grab;
+  /* Stops the browser's native scroll/zoom touch gestures from competing
+     with drag-to-pan on mobile. */
+  touch-action: none;
+}
+
+.room-viewport-camera {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+/* Decorative only -- pointer-events: none so drag-to-pan gestures always
+   reach the room underneath, even where the frame art overlaps its edge. */
+.room-viewport-hud {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  pointer-events: none;
+  user-select: none;
+}
