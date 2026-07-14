@@ -16,7 +16,6 @@ export default function App() {
     placedItems,
     addBoops,
     recordActivityUpload,
-    advanceOneDayForTesting,
     placeItem,
     movePlacedItem,
     flipPlacedItem,
@@ -81,18 +80,6 @@ export default function App() {
           lastUpload={lastUpload}
           onClose={() => setUploadModalOpen(false)}
         />
-      )}
-
-      {/* DEV-ONLY — exercises the real decay logic a day at a time so you
-          don't have to wait a literal week to see happiness drop. Vite
-          strips this out of production builds via import.meta.env.DEV. */}
-      {import.meta.env.DEV && (
-        <section className="dev-tools">
-          <p>Dev tool (not shipped in production build):</p>
-          <button type="button" onClick={advanceOneDayForTesting}>
-            Advance one day
-          </button>
-        </section>
       )}
     </div>
   );
