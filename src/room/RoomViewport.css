@@ -13,6 +13,18 @@
   touch-action: none;
 }
 
+/* The upload/settings screens replace the room entirely rather than
+   panning around it -- scroll instead of clip, no grab cursor, and a
+   solid readable background since there's no room art behind them. */
+.room-viewport-window--panel {
+  overflow-y: auto;
+  overflow-x: hidden;
+  cursor: default;
+  touch-action: pan-y;
+  background: #2b2d42;
+  color: #edf2f4;
+}
+
 .room-viewport-camera {
   position: absolute;
   top: 0;
@@ -29,4 +41,56 @@
   image-rendering: pixelated;
   pointer-events: none;
   user-select: none;
+}
+
+/* Sits directly on top of the frame art's own painted circles (measured
+   positions -- see RoomViewport.jsx) as an invisible, tappable region. */
+.room-viewport-hit-area {
+  position: absolute;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.room-viewport-hit-area--active {
+  background: rgba(237, 242, 244, 0.25);
+}
+
+.room-viewport-hit-area-icon {
+  width: 24px;
+  height: 24px;
+  image-rendering: pixelated;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* The frame art's own bottom grey margin band (y 520-560 of the 560-tall
+   frame) -- BOOPS label on the left, the value on the right. */
+.room-viewport-boops {
+  position: absolute;
+  left: 24px;
+  right: 24px;
+  bottom: 8px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.room-viewport-boops-label {
+  font-size: 0.85rem;
+  color: #edf2f4;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.room-viewport-boops-count {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #ef8354;
 }

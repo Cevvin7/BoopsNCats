@@ -1,0 +1,16 @@
+.settings-screen {
+  padding: 1rem;
+}
+
+.settings-screen h2 {
+  font-size: 1rem;
+  color: #8d99ae;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 0.75rem;
+}
+
+.settings-screen-placeholder {
+  color: #8d99ae;
+  font-size: 0.85rem;
+}

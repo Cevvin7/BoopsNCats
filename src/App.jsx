@@ -1,7 +1,5 @@
 import { useState } from 'react';
 import { useGameState } from './state/GameStateContext.jsx';
-import { UploadModal } from './upload/UploadModal.jsx';
-import { BoopsDisplay } from './ui/BoopsDisplay.jsx';
 import { RoomViewport } from './room/RoomViewport.jsx';
 import { useRoomEditor, EditorMode } from './room/useRoomEditor.js';
 import { useCatWander } from './cat/useCatWander.js';
@@ -24,7 +22,10 @@ export default function App() {
   } = useGameState();
   const [lastUpload, setLastUpload] = useState(null);
   const [editMode, setEditMode] = useState(false);
-  const [uploadModalOpen, setUploadModalOpen] = useState(false);
+  // What the RoomViewport frame's screen is currently showing -- 'room' is
+  // the default, camera-panned view; 'upload' and 'settings' replace it
+  // entirely with an embedded screen (see RoomViewport.jsx).
+  const [screen, setScreen] = useState('room');
 
   const roomEditor = useRoomEditor({ placedItems, placeItem, movePlacedItem, flipPlacedItem, deletePlacedItem });
   // Paused (not stopped mid-stride) while the cat needs attention -- see
@@ -35,6 +36,7 @@ export default function App() {
     addBoops(result.boops);
     recordActivityUpload();
     setLastUpload(result);
+    setScreen('room'); // swap back to the room now that the walk's logged
   }
 
   function toggleEditMode() {
@@ -42,23 +44,24 @@ export default function App() {
       if (wasEditing) roomEditor.cancel(); // drop any in-progress selection/popup on exit
       return !wasEditing;
     });
+    setScreen('room'); // editing only makes sense with the room actually visible
+  }
+
+  // Opening the upload or settings screen exits edit mode -- the
+  // inventory panel and tile-placement flow don't make sense while the
+  // viewport is showing something other than the room. Tapping the same
+  // hit-area again swaps back to the room, rather than needing a
+  // separate close button.
+  function openScreen(next) {
+    if (editMode) {
+      roomEditor.cancel();
+      setEditMode(false);
+    }
+    setScreen((current) => (current === next ? 'room' : next));
   }
 
   return (
     <div className="app">
-      <header className="app-header">
-        <h1>BoopsNCats</h1>
-        <div className="app-header-actions">
-          <button type="button" className="upload-toggle" onClick={() => setUploadModalOpen(true)}>
-            Upload
-          </button>
-          <button type="button" className="edit-mode-toggle" onClick={toggleEditMode}>
-            {editMode ? 'Done' : 'Edit'}
-          </button>
-          <BoopsDisplay boops={boops} />
-        </div>
-      </header>
-
       <RoomViewport
         catHappiness={cat.happiness}
         catNeedsAttention={needsAttention}
@@ -66,6 +69,14 @@ export default function App() {
         placedItems={placedItems}
         editMode={editMode}
         roomEditor={roomEditor}
+        screen={screen}
+        editModeActive={editMode}
+        onTapEdit={toggleEditMode}
+        onTapUpload={() => openScreen('upload')}
+        onTapSettings={() => openScreen('settings')}
+        boops={boops}
+        onUploadResult={handleUploadResult}
+        lastUpload={lastUpload}
       />
 
       {editMode && (
@@ -77,14 +88,6 @@ export default function App() {
             onSelectItem={roomEditor.selectInventoryItem}
           />
         </section>
-      )}
-
-      {uploadModalOpen && (
-        <UploadModal
-          onResult={handleUploadResult}
-          lastUpload={lastUpload}
-          onClose={() => setUploadModalOpen(false)}
-        />
       )}
     </div>
   );
