@@ -37,7 +37,7 @@
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 32, "h": 32 },
     "sourceSize": { "w": 32, "h": 32 },
-    "duration": 1000
+    "duration": 500
    },
    "cat-black-spritesheet (Walking) 1.aseprite": {
     "frame": { "x": 32, "y": 64, "w": 32, "h": 32 },
@@ -45,7 +45,7 @@
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 32, "h": 32 },
     "sourceSize": { "w": 32, "h": 32 },
-    "duration": 1000
+    "duration": 500
    },
    "cat-black-spritesheet (NeedsExercise) 0.aseprite": {
     "frame": { "x": 0, "y": 96, "w": 32, "h": 32 },
