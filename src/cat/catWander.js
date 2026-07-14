@@ -13,7 +13,7 @@ const WANDER_INTERVAL_JITTER_MS = 5_000;
 // An arbitrary, tunable walking pace -- distance is measured in grid
 // units (tiles), not pixels, so this stays correct regardless of pixel
 // scale or room size.
-const WALK_SPEED_TILES_PER_SECOND = 1.5;
+const WALK_SPEED_TILES_PER_SECOND = 1;
 
 // 64 tiles total; even with several pieces of furniture down, the odds of
 // failing to find a free tile within this many random draws are
