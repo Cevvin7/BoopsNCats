@@ -29,8 +29,10 @@
   pointer-events: none;
 }
 
+/* left/top/width/height are the entity's full footprint bounding box
+   (roomGrid.getFootprintScreenRect), not a center point, so no
+   translate() is needed here. */
 .room-entity {
   position: absolute;
-  transform: translate(-50%, -50%);
   pointer-events: auto;
 }

@@ -4,16 +4,29 @@
   z-index: 3;
 }
 
-.tile-highlight {
+/* Visual-only footprint preview — overlaps freely with neighboring
+   anchors' previews, so it never intercepts clicks. */
+.tile-highlight-preview {
+  position: absolute;
+  box-sizing: border-box;
+  border: 2px solid rgba(76, 201, 148, 0.5);
+  background: rgba(76, 201, 148, 0.18);
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+/* The real click target: always exactly one cell, so it never overlaps
+   another anchor's click target even when footprint previews do. */
+.tile-highlight-anchor {
   position: absolute;
   box-sizing: border-box;
   border: 2px solid rgba(76, 201, 148, 0.9);
-  background: rgba(76, 201, 148, 0.35);
+  background: rgba(76, 201, 148, 0.5);
   border-radius: 4px;
   padding: 0;
   cursor: pointer;
 }
 
-.tile-highlight:hover {
-  background: rgba(76, 201, 148, 0.55);
+.tile-highlight-anchor:hover {
+  background: rgba(76, 201, 148, 0.75);
 }

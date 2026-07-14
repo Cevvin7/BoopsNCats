@@ -5,6 +5,7 @@ import {
   movePlacedItem,
   flipPlacedItem,
   findPlacedItem,
+  getPlacedFace,
 } from './placedItemsModel.js';
 
 describe('addPlacedItem', () => {
@@ -19,6 +20,14 @@ describe('addPlacedItem', () => {
     const once = addPlacedItem([], { itemId: 'plant', row: 0, col: 0 });
     const twice = addPlacedItem(once, { itemId: 'plant', row: 1, col: 1 });
     expect(twice[0].id).not.toBe(twice[1].id);
+  });
+
+  it('stores a face for wall items and leaves it absent for floor items', () => {
+    const [shelf] = addPlacedItem([], { itemId: 'shelf', row: 0, col: 0, face: 'right' });
+    expect(shelf.face).toBe('right');
+
+    const [plant] = addPlacedItem([], { itemId: 'plant', row: 0, col: 0 });
+    expect(plant.face).toBeUndefined();
   });
 });
 
@@ -42,6 +51,22 @@ describe('movePlacedItem', () => {
     const [plant] = addPlacedItem([], { itemId: 'plant', row: 0, col: 0 });
     const moved = movePlacedItem([plant], plant.id, { row: 5, col: 6 });
     expect(moved[0]).toMatchObject({ row: 5, col: 6, itemId: 'plant' });
+  });
+
+  it('can move a wall item onto the other face', () => {
+    const [shelf] = addPlacedItem([], { itemId: 'shelf', row: 0, col: 0, face: 'left' });
+    const moved = movePlacedItem([shelf], shelf.id, { row: 1, col: 2, face: 'right' });
+    expect(moved[0]).toMatchObject({ row: 1, col: 2, face: 'right' });
+  });
+});
+
+describe('getPlacedFace', () => {
+  it('returns the stored face when present', () => {
+    expect(getPlacedFace({ face: 'right' })).toBe('right');
+  });
+
+  it('defaults to left for older save data with no face at all', () => {
+    expect(getPlacedFace({ itemId: 'shelf', row: 0, col: 0 })).toBe('left');
   });
 });
 

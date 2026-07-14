@@ -1,6 +1,9 @@
+/* width/height 100% (not aspect-ratio: 1) so a non-square footprint
+   (e.g. a 4x1 shelf) fills its whole bounding box instead of being
+   forced square. */
 .placed-item-sprite {
   width: 100%;
-  aspect-ratio: 1;
+  height: 100%;
   border: none;
   border-radius: 4px;
   padding: 0;
