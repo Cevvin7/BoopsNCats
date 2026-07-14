@@ -9,7 +9,7 @@
 
 .inventory-section h2 {
   font-size: 1rem;
-  color: #8d99ae;
+  color: var(--color-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: 0.5rem;

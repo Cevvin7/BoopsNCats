@@ -1,24 +1,24 @@
 .gpx-dropzone {
-  border: 2px dashed #8d99ae;
+  border: 2px dashed var(--color-text-muted);
   border-radius: 8px;
   padding: 2rem 1rem;
   text-align: center;
   cursor: pointer;
-  color: #edf2f4;
+  color: var(--color-text);
   transition: border-color 0.15s, background-color 0.15s;
 }
 
 .gpx-dropzone:hover,
 .gpx-dropzone:focus-visible {
-  border-color: #edf2f4;
+  border-color: var(--color-text);
 }
 
 .gpx-dropzone--active {
-  border-color: #ef8354;
-  background-color: rgba(239, 131, 84, 0.08);
+  border-color: var(--color-accent);
+  background-color: rgba(var(--color-accent-rgb), 0.08);
 }
 
 .gpx-upload-error {
-  color: #ef476f;
+  color: var(--color-danger);
   margin-top: 0.5rem;
 }

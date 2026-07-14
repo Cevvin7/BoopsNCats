@@ -5,12 +5,45 @@
      URL goes through the same GitHub Pages subpath handling every other
      public/ asset needs. Falls back to a system font until it loads. */
   font-family: 'ThaleahFat', system-ui, -apple-system, sans-serif;
+
+  /* Theme tokens -- dark is the default/base, overridden below under
+     [data-theme="light"] (set on this element by useTheme.js). Room art,
+     the HUD frame image, and TileGridOverlay's placement-validity green
+     are NOT part of this system -- they're either baked into PNGs or a
+     functional status color, not decorative UI chrome, so they stay
+     constant across themes. The "-rgb" companions exist so translucent
+     overlays (rgba(var(--color-x-rgb), alpha)) can theme too, since a
+     hex custom property can't have opacity applied to it directly. */
+  --color-bg: #121212;
+  --color-surface: #2b2d42;
+  --color-surface-rgb: 43, 45, 66;
+  --color-text: #edf2f4;
+  --color-text-rgb: 237, 242, 244;
+  --color-text-muted: #8d99ae;
+  --color-text-muted-rgb: 141, 153, 174;
+  --color-accent: #ef8354;
+  --color-accent-rgb: 239, 131, 84;
+  --color-danger: #ef476f;
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+  --color-bg: #f2ede4;
+  --color-surface: #ffffff;
+  --color-surface-rgb: 255, 255, 255;
+  --color-text: #2b2d42;
+  --color-text-rgb: 43, 45, 66;
+  --color-text-muted: #5c6b7a;
+  --color-text-muted-rgb: 92, 107, 122;
+  --color-accent: #c85a2a;
+  --color-accent-rgb: 200, 90, 42;
+  --color-danger: #c22f4c;
 }
 
 body {
   margin: 0;
-  background: #121212;
-  color: #edf2f4;
+  background: var(--color-bg);
+  color: var(--color-text);
 }
 
 button {

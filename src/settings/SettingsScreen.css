@@ -4,13 +4,127 @@
 
 .settings-screen h2 {
   font-size: 1rem;
-  color: #8d99ae;
+  color: var(--color-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin: 0 0 0.75rem;
 }
 
-.settings-screen-placeholder {
-  color: #8d99ae;
+.settings-entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid rgba(var(--color-text-muted-rgb), 0.2);
+}
+
+.settings-entry:last-child {
+  border-bottom: none;
+}
+
+.settings-entry--stacked {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.settings-entry-label {
+  font-size: 0.9rem;
+}
+
+.settings-theme-toggle {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  border-radius: 12px;
+  border: none;
+  background: rgba(var(--color-text-muted-rgb), 0.35);
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+  transition: background-color 0.15s;
+}
+
+.settings-theme-toggle--on {
+  background: var(--color-accent);
+}
+
+.settings-theme-toggle-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--color-surface);
+  transition: transform 0.15s;
+}
+
+.settings-theme-toggle--on .settings-theme-toggle-knob {
+  transform: translateX(20px);
+}
+
+.settings-code-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.settings-code-input {
+  flex: 1;
+  min-width: 0;
+  font-family: inherit;
+  font-size: 0.9rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 0.5rem;
+  border-radius: 6px;
+  border: 1px solid var(--color-text-muted);
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.settings-button {
+  font-family: inherit;
   font-size: 0.85rem;
+  border: none;
+  border-radius: 6px;
+  padding: 0.5rem 0.85rem;
+  cursor: pointer;
+  background: var(--color-text-muted);
+  color: var(--color-surface);
+}
+
+.settings-button:hover {
+  background: var(--color-text);
+}
+
+.settings-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.settings-code-feedback {
+  margin: 0.5rem 0 0;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.settings-link {
+  color: var(--color-accent);
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.settings-link:hover {
+  text-decoration: underline;
+}
+
+.settings-danger-button {
+  background: var(--color-danger);
+  color: var(--color-text);
+  align-self: flex-start;
+}
+
+.settings-danger-button:hover {
+  filter: brightness(1.1);
 }
