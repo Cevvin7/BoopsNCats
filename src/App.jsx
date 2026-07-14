@@ -46,7 +46,7 @@ export default function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <h1>Boop Tracker</h1>
+        <h1>BoopsNCats</h1>
         <div className="app-header-actions">
           <button type="button" className="edit-mode-toggle" onClick={toggleEditMode}>
             {editMode ? 'Done' : 'Edit'}
