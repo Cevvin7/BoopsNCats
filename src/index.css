@@ -1,6 +1,10 @@
 :root {
   color-scheme: dark;
-  font-family: system-ui, -apple-system, sans-serif;
+  /* ThaleahFat by Rick Hoppmann, CC-BY 4.0 -- see README.md for
+     attribution. Loaded in fonts.js (not a static @font-face here) so its
+     URL goes through the same GitHub Pages subpath handling every other
+     public/ asset needs. Falls back to a system font until it loads. */
+  font-family: 'ThaleahFat', system-ui, -apple-system, sans-serif;
 }
 
 body {
