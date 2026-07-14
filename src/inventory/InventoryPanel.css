@@ -13,7 +13,7 @@
   min-width: 4.5rem;
   border: 2px solid transparent;
   border-radius: 8px;
-  background: rgba(141, 153, 174, 0.1);
+  background: rgba(var(--color-text-muted-rgb), 0.1);
   color: inherit;
   font-family: inherit;
   cursor: pointer;
@@ -25,7 +25,7 @@
 }
 
 .inventory-item--selected {
-  border-color: #ef8354;
+  border-color: var(--color-accent);
 }
 
 .inventory-item-swatch {
@@ -43,5 +43,5 @@
 
 .inventory-item-quantity {
   font-size: 0.7rem;
-  color: #8d99ae;
+  color: var(--color-text-muted);
 }

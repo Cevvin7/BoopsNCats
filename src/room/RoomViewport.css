@@ -21,8 +21,8 @@
   overflow-x: hidden;
   cursor: default;
   touch-action: pan-y;
-  background: #2b2d42;
-  color: #edf2f4;
+  background: var(--color-surface);
+  color: var(--color-text);
 }
 
 .room-viewport-camera {
@@ -58,7 +58,7 @@
 }
 
 .room-viewport-hit-area--active {
-  background: rgba(237, 242, 244, 0.25);
+  background: rgba(var(--color-text-rgb), 0.25);
 }
 
 .room-viewport-hit-area-icon {
@@ -84,7 +84,7 @@
 
 .room-viewport-boops-label {
   font-size: 0.85rem;
-  color: #edf2f4;
+  color: var(--color-text);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -92,5 +92,5 @@
 .room-viewport-boops-count {
   font-size: 1rem;
   font-weight: 700;
-  color: #ef8354;
+  color: var(--color-accent);
 }

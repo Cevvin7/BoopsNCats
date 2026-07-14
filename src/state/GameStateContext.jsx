@@ -16,6 +16,7 @@ import {
   findPlacedItem,
 } from '../inventory/placedItemsModel.js';
 import { isValidPlacementPosition } from '../inventory/placement.js';
+import { redeemCode as redeemCodePure, RedeemStatus } from '../settings/codes.js';
 
 const STORAGE_KEY = 'boopTracker.gameState';
 // Happiness only ever changes once per (local) day, so polling every few
@@ -30,6 +31,7 @@ function defaultState() {
     cat: defaultCat(),
     inventory: defaultInventory(),
     placedItems: [],
+    redeemedCodes: [],
   };
 }
 
@@ -165,6 +167,35 @@ export function GameStateProvider({ children }) {
     [setState],
   );
 
+  // Validates + applies a promo code in one shot via the pure lookup in
+  // codes.js, so the component calling this never has to know the reward
+  // shape or touch `redeemedCodes` directly. Returns the status so the UI
+  // can show the right feedback message.
+  const redeemCode = useCallback(
+    (code) => {
+      let status;
+      setState((prev) => {
+        const result = redeemCodePure(code, prev.redeemedCodes);
+        status = result.status;
+        if (result.status !== RedeemStatus.SUCCESS) return prev;
+        return {
+          ...prev,
+          boops: prev.boops + result.reward.boops,
+          redeemedCodes: [...prev.redeemedCodes, code],
+        };
+      });
+      return status;
+    },
+    [setState],
+  );
+
+  // Wipes the cat, inventory, placed items, boops, and redeemed codes back
+  // to a fresh save -- the UI is responsible for confirming with the
+  // player first (see SettingsScreen's two-step confirm).
+  const factoryReset = useCallback(() => {
+    setState(defaultState());
+  }, [setState]);
+
   // Checked on mount, whenever the tab regains visibility (covers "closed
   // for days" and "backgrounded overnight"), and on a coarse interval while
   // open — not a tight polling loop, since browsers throttle background
@@ -196,8 +227,21 @@ export function GameStateProvider({ children }) {
       movePlacedItem,
       flipPlacedItem,
       deletePlacedItem,
+      redeemCode,
+      factoryReset,
     }),
-    [state, addBoops, spendBoops, recordActivityUpload, placeItem, movePlacedItem, flipPlacedItem, deletePlacedItem],
+    [
+      state,
+      addBoops,
+      spendBoops,
+      recordActivityUpload,
+      placeItem,
+      movePlacedItem,
+      flipPlacedItem,
+      deletePlacedItem,
+      redeemCode,
+      factoryReset,
+    ],
   );
 
   return <GameStateContext.Provider value={value}>{children}</GameStateContext.Provider>;

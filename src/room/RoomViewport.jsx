@@ -50,6 +50,10 @@ export function RoomViewport({
   boops,
   onUploadResult,
   lastUpload,
+  theme,
+  onToggleTheme,
+  onRedeemCode,
+  onFactoryReset,
   ...roomProps
 }) {
   const [frameFailed, setFrameFailed] = useState(false);
@@ -84,7 +88,14 @@ export function RoomViewport({
           </div>
         )}
         {screen === 'upload' && <UploadScreen onResult={onUploadResult} lastUpload={lastUpload} />}
-        {screen === 'settings' && <SettingsScreen />}
+        {screen === 'settings' && (
+          <SettingsScreen
+            theme={theme}
+            onToggleTheme={onToggleTheme}
+            onRedeemCode={onRedeemCode}
+            onFactoryReset={onFactoryReset}
+          />
+        )}
       </div>
 
       {/* The frame art (including its own painted circles) has to sit

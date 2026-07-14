@@ -3,6 +3,7 @@ import { useGameState } from './state/GameStateContext.jsx';
 import { RoomViewport } from './room/RoomViewport.jsx';
 import { useRoomEditor, EditorMode } from './room/useRoomEditor.js';
 import { useCatWander } from './cat/useCatWander.js';
+import { useTheme } from './settings/useTheme.js';
 import { InventoryPanel } from './inventory/InventoryPanel.jsx';
 import './App.css';
 
@@ -19,7 +20,10 @@ export default function App() {
     movePlacedItem,
     flipPlacedItem,
     deletePlacedItem,
+    redeemCode,
+    factoryReset,
   } = useGameState();
+  const { theme, toggleTheme } = useTheme();
   const [lastUpload, setLastUpload] = useState(null);
   const [editMode, setEditMode] = useState(false);
   // What the RoomViewport frame's screen is currently showing -- 'room' is
@@ -77,6 +81,10 @@ export default function App() {
         boops={boops}
         onUploadResult={handleUploadResult}
         lastUpload={lastUpload}
+        theme={theme}
+        onToggleTheme={toggleTheme}
+        onRedeemCode={redeemCode}
+        onFactoryReset={factoryReset}
       />
 
       {editMode && (
