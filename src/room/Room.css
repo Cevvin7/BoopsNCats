@@ -31,9 +31,9 @@
   pointer-events: none;
 }
 
-/* left/top/width/height are the entity's full footprint bounding box
-   (roomGrid.getFootprintScreenRect), not a center point, so no
-   translate() is needed here. */
+/* The cat sets left/top/width/height directly (its full bounding box, no
+   transform needed). Placed items anchor from a horizontal center point
+   instead and add their own inline translateX(-50%) -- see Room.jsx. */
 .room-entity {
   position: absolute;
   pointer-events: auto;

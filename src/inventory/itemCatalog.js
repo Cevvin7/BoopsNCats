@@ -51,8 +51,12 @@ export const ITEM_CATALOG = {
     name: 'Tall Bookshelf',
     placementType: PlacementType.ON_FLOOR_AGAINST_WALL,
     footprint: { width: 1, height: 1 },
-    // Real art not in the repo yet -- spriteUrl falls back to `color`
-    // automatically (see PlacedItemSprite/InventorySwatch) until it lands.
+    // spriteHeightPx is the item's own art canvas height, in native (1x)
+    // pixels -- deliberately independent of footprint (which only says how
+    // much floor space its base occupies). This is what lets the sprite
+    // rise up above its single floor tile instead of being squashed to
+    // fit it; see the sizing comment in Room.jsx for the general rule.
+    spriteHeightPx: 80,
     spriteUrl: `${import.meta.env.BASE_URL}sprites/furniture/furniture-bookshelf2xtall.png`,
     color: '#6b4a30',
   },
