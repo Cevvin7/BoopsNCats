@@ -31,7 +31,9 @@ function groupFramesByAnimation(framesObject) {
   return animations;
 }
 
-export const CAT_SPRITE_SHEET_URL = '/sprites/cat/cat-black-sprite.png';
+// See the matching comment in Room.jsx: BASE_URL keeps this correct under
+// both dev ('/') and the production subpath ('/BoopsNCats/').
+export const CAT_SPRITE_SHEET_URL = `${import.meta.env.BASE_URL}sprites/cat/cat-black-sprite.png`;
 export const CAT_SHEET_WIDTH = catSpriteData.meta.size.w;
 export const CAT_SHEET_HEIGHT = catSpriteData.meta.size.h;
 export const CAT_ANIMATIONS = groupFramesByAnimation(catSpriteData.frames);

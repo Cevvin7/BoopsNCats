@@ -8,8 +8,13 @@ import { TileGridOverlay } from './TileGridOverlay.jsx';
 import { DEFAULT_CAT_POSITION, floorCellRect, wallCellRect, getFootprintScreenRect } from './roomGrid.js';
 import './Room.css';
 
-const FLOOR_ART_URL = '/sprites/room/TestFloor1.png';
-const WALL_ART_URL = '/sprites/room/TestWalls1.png';
+// import.meta.env.BASE_URL reflects vite.config.js's configured base
+// ('/' in dev, '/BoopsNCats/' in production) -- a hardcoded leading '/'
+// here would always resolve to the domain root and 404 once the site is
+// served from a subpath, since Vite only rewrites real imports and
+// index.html's own tags, not plain string literals in JS.
+const FLOOR_ART_URL = `${import.meta.env.BASE_URL}sprites/room/TestFloor1.png`;
+const WALL_ART_URL = `${import.meta.env.BASE_URL}sprites/room/TestWalls1.png`;
 
 // Both art layers are painted on the same 512x448 canvas with transparent
 // backgrounds, so stacking them at identical size/position composites them
