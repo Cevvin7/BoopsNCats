@@ -72,3 +72,16 @@ export function walkDurationMs(distanceInTiles) {
   if (distanceInTiles <= 0) return 0;
   return (distanceInTiles / WALK_SPEED_TILES_PER_SECOND) * 1000;
 }
+
+// Screen-space X is proportional to (col - row) in the isometric
+// projection (see roomGrid.js's floorCorner) -- moving screen-left means
+// that difference is decreasing over the course of the walk. A zero
+// delta (moving purely toward/away from the camera, with no left-right
+// screen motion at all) returns null so the caller can just keep
+// whichever way the cat was already facing instead of picking one
+// arbitrarily.
+export function walkFacingLeft(from, to) {
+  const screenDx = (to.col - to.row) - (from.col - from.row);
+  if (screenDx === 0) return null;
+  return screenDx < 0;
+}

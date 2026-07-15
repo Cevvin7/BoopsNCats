@@ -36,9 +36,49 @@ export function getFootprintTiles(anchor, footprint) {
   return tiles;
 }
 
-function getPlacedItemTiles(placedItem) {
+// Catalog footprints describe an item's footprint in its default ("right
+// wall") orientation -- width along columns, height along rows. The
+// room's two wall-adjacent floor edges run along DIFFERENT axes (row 0
+// runs along columns, col 0 runs along rows -- see roomGrid.js's
+// wallCorner comment), so an onFloorAgainstWall item hugging the left
+// edge instead needs that same footprint transposed, or a >1-tile item
+// could never actually lie flush against it. Every other placementType
+// (and the default/undefined 'right' face) uses the footprint exactly
+// as the catalog defines it.
+function orientedFootprint(placementType, footprint, face) {
+  if (placementType === PlacementType.ON_FLOOR_AGAINST_WALL && face === 'left') {
+    return { width: footprint.height, height: footprint.width };
+  }
+  return footprint;
+}
+
+// Existing placed items (and any candidate position with no explicit
+// face) predate onFloorAgainstWall's two-wall support and were always
+// implicitly against the row-0 ("right") edge -- unlike onWall's
+// getPlacedFace, which defaults to 'left' for its own unrelated reason.
+export function getFloorAgainstWallFace(placedItem) {
+  return placedItem.face ?? 'right';
+}
+
+/**
+ * The screen-space footprint to actually use for an already-placed item
+ * -- accounting for which wall an onFloorAgainstWall item is against
+ * (see orientedFootprint above). Every other placementType's footprint
+ * passes through unchanged. Shared by collision-tile computation here
+ * and by Room.jsx's rendering, so the two can never disagree about which
+ * tiles an item occupies.
+ */
+export function orientedFootprintForPlacedItem(placedItem) {
   const catalogEntry = ITEM_CATALOG[placedItem.itemId];
-  return getFootprintTiles(placedItem, getFootprint(catalogEntry));
+  const face =
+    catalogEntry.placementType === PlacementType.ON_FLOOR_AGAINST_WALL
+      ? getFloorAgainstWallFace(placedItem)
+      : undefined;
+  return orientedFootprint(catalogEntry.placementType, getFootprint(catalogEntry), face);
+}
+
+function getPlacedItemTiles(placedItem) {
+  return getFootprintTiles(placedItem, orientedFootprintForPlacedItem(placedItem));
 }
 
 function tileKey({ row, col }) {
@@ -56,7 +96,7 @@ export function getOccupiedFloorTiles(placedItems) {
   for (const placed of placedItems) {
     const catalogEntry = ITEM_CATALOG[placed.itemId];
     if (regionForPlacementType(catalogEntry.placementType) !== 'floor') continue;
-    for (const tile of getFootprintTiles(placed, getFootprint(catalogEntry))) {
+    for (const tile of getPlacedItemTiles(placed)) {
       occupied.add(tileKey(tile));
     }
   }
@@ -68,10 +108,12 @@ export function getOccupiedFloorTiles(placedItems) {
  * placementType if:
  *  1. every tile the footprint covers is in-bounds for that type's region
  *     (floor grid vs a specific wall face)
- *  2. for onFloorAgainstWall, every one of those tiles is also in the
- *     floor row that borders the wall (roomGrid.isAgainstWall) — in
- *     practice this means the footprint's height must be 1, since no row
- *     other than the front one can ever be "against the wall"
+ *  2. for onFloorAgainstWall, every one of those tiles is also against
+ *     the named wall (`face`, defaulting to 'right' -- see
+ *     roomGrid.isAgainstWall and orientedFootprint above) — in practice
+ *     this means the footprint's cross-wall dimension must be 1, since
+ *     no other row (against the right wall) or column (against the
+ *     left wall) is ever "against" it
  *  3. for onWall, every tile is also outside the kickboard band
  *     (roomGrid.isInHangableWallZone)
  *  4. none of those tiles are already occupied by another placed item's
@@ -88,7 +130,7 @@ export function isValidPlacementPosition({
   excludePlacedItemId,
 }) {
   const region = regionForPlacementType(placementType);
-  const footprintTiles = getFootprintTiles(position, footprint);
+  const footprintTiles = getFootprintTiles(position, orientedFootprint(placementType, footprint, face));
 
   for (const tile of footprintTiles) {
     if (region === 'wall') {
@@ -96,7 +138,7 @@ export function isValidPlacementPosition({
       if (!isInHangableWallZone(tile)) return false;
     } else {
       if (!isValidFloorPosition(tile)) return false;
-      if (placementType === PlacementType.ON_FLOOR_AGAINST_WALL && !isAgainstWall(tile)) return false;
+      if (placementType === PlacementType.ON_FLOOR_AGAINST_WALL && !isAgainstWall(tile, face)) return false;
     }
   }
 
@@ -116,11 +158,12 @@ export function isValidPlacementPosition({
 
 /**
  * Enumerates every valid anchor position for a placementType — this is
- * what drives tile highlighting. For onWall this checks BOTH faces and
- * tags each returned position with which one it's on, since either wall
- * is a legitimate choice for a wall-mounted item. The room is small
- * enough (64 floor tiles, 2 x 32 wall tiles) that brute-force checking
- * every anchor cell is cheap enough to redo on every selection change.
+ * what drives tile highlighting. For onWall AND onFloorAgainstWall this
+ * checks BOTH walls and tags each returned position with which one it's
+ * on, since either is a legitimate choice; freeStand has no wall concept
+ * at all. The room is small enough (64 floor tiles, 2 x 32 wall tiles)
+ * that brute-force checking every anchor cell is cheap enough to redo on
+ * every selection change.
  */
 export function getValidPositions({
   placementType,
@@ -138,6 +181,32 @@ export function getValidPositions({
           const position = { row, col };
           if (isValidPlacementPosition({ placementType, footprint, position, face, placedItems, excludePlacedItemId })) {
             positions.push({ face, row, col });
+          }
+        }
+      }
+    }
+    return positions;
+  }
+
+  if (placementType === PlacementType.ON_FLOOR_AGAINST_WALL) {
+    // Both walls share the back-corner tile (0,0), where the anchor is
+    // valid under EITHER orientation at once (e.g. a 2-wide footprint's
+    // normal right-wall shape and its transposed left-wall shape both
+    // fit there). Both faces' markers would then render at the exact
+    // same on-screen tile, and whichever renders last would always
+    // intercept the tap meant for the other -- claimedAnchors keeps
+    // each anchor tile in the results only once, so every returned
+    // position stays individually reachable.
+    const claimedAnchors = new Set();
+    for (const face of WALL_FACES) {
+      for (let row = 0; row < FLOOR_ROWS; row++) {
+        for (let col = 0; col < FLOOR_COLS; col++) {
+          const anchorKey = tileKey({ row, col });
+          if (claimedAnchors.has(anchorKey)) continue;
+          const position = { row, col };
+          if (isValidPlacementPosition({ placementType, footprint, position, face, placedItems, excludePlacedItemId })) {
+            positions.push({ face, row, col });
+            claimedAnchors.add(anchorKey);
           }
         }
       }

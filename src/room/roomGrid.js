@@ -185,16 +185,15 @@ export function getFootprintScreenRect(cellRectFn, anchor, footprint) {
 
 /**
  * Which floor tiles count as "against a wall," for onFloorAgainstWall
- * placement (e.g. a bookshelf). The floor and wall are independent
- * grids, so there's no per-column mapping between them — this is a
- * property of the room's shape instead: row 0 is the floor row closest
- * to the wall (its far edge is the back corner both walls share). If the
- * room grows a third wall (e.g. facing the camera) later, this becomes
- * `row === 0 || col === 0 || col === FLOOR_COLS - 1` — the one place
- * that changes, not every caller that checks wall-adjacency.
+ * placement (e.g. a bookshelf) -- and *which* wall, since the room's two
+ * walls border different edges of the floor grid (see wallCorner above):
+ * the right wall runs along row 0, the left wall along col 0. `face`
+ * defaults to 'right' so existing callers -- and any already-placed item
+ * from before onFloorAgainstWall supported a second wall -- keep their
+ * original row-0-only behavior unchanged.
  */
-export function isAgainstWall({ row }) {
-  return row === 0;
+export function isAgainstWall({ row, col }, face = 'right') {
+  return face === 'left' ? col === 0 : row === 0;
 }
 
 // The bottom-most wall rows (closest to the floor) render as a

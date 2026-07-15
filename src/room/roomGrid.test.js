@@ -180,11 +180,22 @@ describe('isValidWallFace / WALL_FACES', () => {
 });
 
 describe('isAgainstWall', () => {
-  it('is true only for row 0, regardless of column', () => {
+  it('defaults to the right wall (row 0), regardless of column', () => {
     expect(isAgainstWall({ row: 0, col: 0 })).toBe(true);
     expect(isAgainstWall({ row: 0, col: FLOOR_COLS - 1 })).toBe(true);
     expect(isAgainstWall({ row: 1, col: 0 })).toBe(false);
     expect(isAgainstWall({ row: FLOOR_ROWS - 1, col: 0 })).toBe(false);
+  });
+
+  it("with face 'right', is true only for row 0", () => {
+    expect(isAgainstWall({ row: 0, col: 3 }, 'right')).toBe(true);
+    expect(isAgainstWall({ row: 1, col: 0 }, 'right')).toBe(false);
+  });
+
+  it("with face 'left', is true only for col 0, regardless of row", () => {
+    expect(isAgainstWall({ row: 0, col: 0 }, 'left')).toBe(true);
+    expect(isAgainstWall({ row: FLOOR_ROWS - 1, col: 0 }, 'left')).toBe(true);
+    expect(isAgainstWall({ row: 0, col: 1 }, 'left')).toBe(false);
   });
 });
 

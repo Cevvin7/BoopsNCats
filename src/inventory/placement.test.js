@@ -5,6 +5,8 @@ import {
   getFootprintTiles,
   getOccupiedFloorTiles,
   regionForPlacementType,
+  getFloorAgainstWallFace,
+  orientedFootprintForPlacedItem,
 } from './placement.js';
 import { PlacementType, ITEM_CATALOG, getFootprint } from './itemCatalog.js';
 import { FLOOR_ROWS, FLOOR_COLS, WALL_COLS, WALL_HANGABLE_ROWS } from '../room/roomGrid.js';
@@ -90,7 +92,7 @@ describe('isValidPlacementPosition: freeStand with a multi-tile footprint', () =
 describe('isValidPlacementPosition: onFloorAgainstWall with a wide footprint', () => {
   const footprint = { width: 2, height: 1 };
 
-  it('accepts a footprint fully within row 0', () => {
+  it('accepts a footprint fully within row 0 (default/right-wall face)', () => {
     expect(
       isValidPlacementPosition({
         placementType: PlacementType.ON_FLOOR_AGAINST_WALL,
@@ -112,12 +114,47 @@ describe('isValidPlacementPosition: onFloorAgainstWall with a wide footprint', (
     ).toBe(false);
   });
 
-  it('rejects a footprint taller than 1 row -- no row besides 0 is ever "against the wall"', () => {
+  it('rejects a footprint taller than 1 row -- no row besides 0 is ever "against the right wall"', () => {
     expect(
       isValidPlacementPosition({
         placementType: PlacementType.ON_FLOOR_AGAINST_WALL,
         footprint: { width: 1, height: 2 },
         position: { row: 0, col: 3 },
+        placedItems: [],
+      }),
+    ).toBe(false);
+  });
+
+  it("accepts a footprint fully within col 0 for face 'left', transposing width to run along rows", () => {
+    expect(
+      isValidPlacementPosition({
+        placementType: PlacementType.ON_FLOOR_AGAINST_WALL,
+        footprint,
+        position: { row: 3, col: 0 },
+        face: 'left',
+        placedItems: [],
+      }),
+    ).toBe(true);
+  });
+
+  it("rejects a left-wall anchor whose transposed footprint runs off the floor grid", () => {
+    expect(
+      isValidPlacementPosition({
+        placementType: PlacementType.ON_FLOOR_AGAINST_WALL,
+        footprint,
+        position: { row: FLOOR_ROWS - 1, col: 0 }, // 2 rows needed, only 1 remains
+        face: 'left',
+        placedItems: [],
+      }),
+    ).toBe(false);
+  });
+
+  it("rejects a col-0 anchor under the default/right face -- 'left' must be requested explicitly", () => {
+    expect(
+      isValidPlacementPosition({
+        placementType: PlacementType.ON_FLOOR_AGAINST_WALL,
+        footprint,
+        position: { row: 3, col: 0 },
         placedItems: [],
       }),
     ).toBe(false);
@@ -226,6 +263,60 @@ describe('getOccupiedFloorTiles', () => {
     const occupied = getOccupiedFloorTiles(placedItems);
     expect(occupied).toEqual(new Set(['0,0', '0,1', '5,5', '5,6', '6,5', '6,6']));
   });
+
+  it("includes the transposed tiles for a bookshelf against the left wall (running down the rows, not across columns)", () => {
+    const placedItems = [{ id: 'a', itemId: 'bookshelf', row: 3, col: 0, face: 'left', flipped: false }];
+    const occupied = getOccupiedFloorTiles(placedItems);
+    expect(occupied).toEqual(new Set(['3,0', '4,0']));
+  });
+});
+
+describe('orientedFootprintForPlacedItem / getFloorAgainstWallFace', () => {
+  it('defaults a bookshelf with no stored face to right, using its footprint as-is', () => {
+    const placedItem = { id: 'a', itemId: 'bookshelf', row: 0, col: 0, flipped: false };
+    expect(getFloorAgainstWallFace(placedItem)).toBe('right');
+    expect(orientedFootprintForPlacedItem(placedItem)).toEqual(getFootprint(ITEM_CATALOG.bookshelf));
+  });
+
+  it('transposes a bookshelf stored against the left wall', () => {
+    const placedItem = { id: 'a', itemId: 'bookshelf', row: 3, col: 0, face: 'left', flipped: false };
+    expect(orientedFootprintForPlacedItem(placedItem)).toEqual({ width: 1, height: 2 });
+  });
+
+  it('leaves freeStand and onWall items untouched regardless of any stored face', () => {
+    const plant = { id: 'a', itemId: 'plant', row: 4, col: 4, face: 'left', flipped: false };
+    expect(orientedFootprintForPlacedItem(plant)).toEqual(getFootprint(ITEM_CATALOG.plant));
+
+    const shelf = { id: 'b', itemId: 'shelf', row: 0, col: 0, face: 'left', flipped: false };
+    expect(orientedFootprintForPlacedItem(shelf)).toEqual(getFootprint(ITEM_CATALOG.shelf));
+  });
+});
+
+describe('isValidPlacementPosition: collision across onFloorAgainstWall faces', () => {
+  it('a left-wall bookshelf blocks an overlapping left-wall position but not the same coordinates on the right wall', () => {
+    const footprint = { width: 2, height: 1 };
+    const placedItems = [{ id: 'a', itemId: 'bookshelf', row: 3, col: 0, face: 'left', flipped: false }];
+
+    expect(
+      isValidPlacementPosition({
+        placementType: PlacementType.ON_FLOOR_AGAINST_WALL,
+        footprint,
+        position: { row: 3, col: 0 },
+        face: 'left',
+        placedItems,
+      }),
+    ).toBe(false);
+
+    expect(
+      isValidPlacementPosition({
+        placementType: PlacementType.ON_FLOOR_AGAINST_WALL,
+        footprint,
+        position: { row: 0, col: 3 },
+        face: 'right',
+        placedItems,
+      }),
+    ).toBe(true);
+  });
 });
 
 describe('getValidPositions with footprints', () => {
@@ -239,11 +330,30 @@ describe('getValidPositions with footprints', () => {
     expect(positions.every((p) => p.row <= FLOOR_ROWS - 2 && p.col <= FLOOR_COLS - 2)).toBe(true);
   });
 
-  it('lists only row-0 anchors for a wide onFloorAgainstWall footprint', () => {
+  it('lists anchors on both walls for a wide onFloorAgainstWall footprint, tagged with face', () => {
     const footprint = { width: 2, height: 1 };
     const positions = getValidPositions({ placementType: PlacementType.ON_FLOOR_AGAINST_WALL, footprint, placedItems: [] });
-    expect(positions).toHaveLength(FLOOR_COLS - 1); // anchor col 0..6
-    expect(positions.every((p) => p.row === 0)).toBe(true);
+
+    const rightPositions = positions.filter((p) => p.face === 'right');
+    const leftPositions = positions.filter((p) => p.face === 'left');
+
+    // Left wall: footprint transposed (2 tall along col 0) -- row 0..6.
+    // Checked first (WALL_FACES order), so it claims the shared corner
+    // tile (0,0) -- see getValidPositions' claimedAnchors comment.
+    expect(leftPositions).toHaveLength(FLOOR_ROWS - 1);
+    expect(leftPositions.every((p) => p.col === 0)).toBe(true);
+
+    // Right wall: footprint used as-is (2 wide along row 0) -- col 1..6,
+    // one fewer than the full range since (0,0) was already claimed above.
+    expect(rightPositions).toHaveLength(FLOOR_COLS - 2);
+    expect(rightPositions.every((p) => p.row === 0 && p.col > 0)).toBe(true);
+
+    // No anchor tile appears under both faces, so every marker the
+    // player sees stays individually clickable.
+    const anchorKeys = positions.map((p) => `${p.row},${p.col}`);
+    expect(new Set(anchorKeys).size).toBe(anchorKeys.length);
+
+    expect(positions).toHaveLength(rightPositions.length + leftPositions.length);
   });
 
   it('lists positions on both faces for a wide onWall footprint', () => {

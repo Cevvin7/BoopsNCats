@@ -6,8 +6,11 @@ import './CatSprite.css';
 // needsAttention overrides whatever the wander system (useCatWander) was
 // showing with a dedicated "wants a walk" pose -- `animationName`
 // (SitIdle/StandIdle while idle, Walking while wandering) only applies
-// once that's resolved.
-export function CatSprite({ happiness, needsAttention, animationName }) {
+// once that's resolved. `flipped` reuses the same scaleX(-1) mirroring
+// technique PlacedItemSprite uses for its own flip feature -- the sprite
+// sheet's walk frames only ever face right, so facing left just mirrors
+// them instead of needing a whole second set of frames.
+export function CatSprite({ happiness, needsAttention, animationName, flipped }) {
   const displayedAnimation = needsAttention ? 'NeedsExercise' : animationName;
   const frame = useSpriteFrame(displayedAnimation);
   if (!frame) return null;
@@ -36,6 +39,7 @@ export function CatSprite({ happiness, needsAttention, animationName }) {
         backgroundImage: `url(${CAT_SPRITE_SHEET_URL})`,
         backgroundSize: `${backgroundSizePercent.x}% ${backgroundSizePercent.y}%`,
         backgroundPosition: `${backgroundPositionPercent.x}% ${backgroundPositionPercent.y}%`,
+        transform: `scaleX(${flipped ? -1 : 1})`,
       }}
     />
   );
