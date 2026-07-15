@@ -22,6 +22,11 @@ export function parseGpxDistance(gpxText) {
     throw new Error('No track segments (<trkseg>) found in this GPX file.');
   }
 
+  // Free-text per the GPX spec (no fixed enum) -- boops.js pattern-matches
+  // this for cycling detection, treating anything else (running, walking,
+  // or a missing/unrecognized type) as the default rate.
+  const activityType = doc.querySelector('trk > type')?.textContent?.trim() || null;
+
   let totalMeters = 0;
   let pointCount = 0;
 
@@ -49,5 +54,6 @@ export function parseGpxDistance(gpxText) {
     miles: totalMeters / METERS_PER_MILE,
     km: totalMeters / METERS_PER_KM,
     pointCount,
+    activityType,
   };
 }

@@ -17,7 +17,7 @@ export function GpxUpload({ onResult }) {
       try {
         const text = await file.text();
         const distance = parseGpxDistance(text);
-        const boopsEarned = metersToBoops(distance.meters);
+        const boopsEarned = metersToBoops(distance.meters, distance.activityType);
         onResult({ ...distance, boops: boopsEarned, fileName: file.name });
       } catch (err) {
         setError(err.message || 'Could not read that GPX file.');
