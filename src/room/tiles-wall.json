@@ -1,9 +1,9 @@
 {
   "frameWidth": 32,
   "frameHeight": 48,
-  "frameCount": 2,
+  "frameCount": 4,
   "themes": [
-    { "id": "woodSlats", "name": "Vertical Slats", "range": { "left": [0, 0], "right": [0, 0] } },
-    { "id": "grayWave", "name": "Wavy Gray", "range": { "left": [1, 1], "right": [1, 1] } }
+    { "id": "woodSlats", "name": "Vertical Slats", "range": { "left": [0, 0], "right": [1, 1] } },
+    { "id": "grayWave", "name": "Wavy Gray", "range": { "left": [2, 2], "right": [3, 3] } }
   ]
 }
