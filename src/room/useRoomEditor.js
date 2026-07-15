@@ -108,7 +108,6 @@ export function useRoomEditor({ placedItems, placeItem, movePlacedItem, flipPlac
     selectedItemId: state.selectedItemId,
     isSelectingTile: state.mode === EditorMode.PLACING || state.mode === EditorMode.MOVING,
     activePlacementType: activeItemConfig?.placementType ?? null,
-    activeFootprint: activeItemConfig?.footprint ?? null,
     highlightedPositions,
     menuPlacedItem,
     selectInventoryItem,
