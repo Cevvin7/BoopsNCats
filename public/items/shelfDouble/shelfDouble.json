@@ -1,0 +1,7 @@
+{
+  "id": "shelfDouble",
+  "name": "Long Shelf",
+  "placementType": "onWall",
+  "footprint": { "width": 2, "height": 1 },
+  "color": "#c9a15a"
+}

@@ -2,6 +2,6 @@
   "id": "shelf",
   "name": "Shelf",
   "placementType": "onWall",
-  "footprint": { "width": 4, "height": 1 },
+  "footprint": { "width": 1, "height": 1 },
   "color": "#c9a15a"
 }

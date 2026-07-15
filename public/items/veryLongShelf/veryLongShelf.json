@@ -1,0 +1,7 @@
+{
+  "id": "veryLongShelf",
+  "name": "Very Long Shelf",
+  "placementType": "onWall",
+  "footprint": { "width": 4, "height": 1 },
+  "color": "#c9a15a"
+}
