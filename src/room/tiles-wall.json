@@ -1,6 +1,6 @@
 {
   "frameWidth": 32,
-  "frameHeight": 32,
+  "frameHeight": 48,
   "frameCount": 2,
   "themes": [
     { "id": "woodSlats", "name": "Vertical Slats", "range": [0, 0] },
