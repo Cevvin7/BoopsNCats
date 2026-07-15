@@ -1,8 +1,0 @@
-{
-  "id": "bookshelfTall",
-  "name": "Tall Bookshelf",
-  "placementType": "onFloorAgainstWall",
-  "footprint": { "width": 1, "height": 1 },
-  "spriteHeightPx": 80,
-  "color": "#6b4a30"
-}
