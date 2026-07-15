@@ -4,5 +4,6 @@
   "placementType": "onFloorAgainstWall",
   "footprint": { "width": 1, "height": 1 },
   "spriteHeightPx": 80,
+  "sprite": "furniture-bookshelf2xtall.png",
   "color": "#6b4a30"
 }

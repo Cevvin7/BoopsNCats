@@ -1,3 +1,5 @@
+import { DISCOVERED_ITEMS } from 'virtual:item-catalog';
+
 export const PlacementType = Object.freeze({
   FREE_STAND: 'freeStand',
   ON_FLOOR_AGAINST_WALL: 'onFloorAgainstWall',
@@ -14,50 +16,22 @@ export function getFootprint(catalogEntry) {
   return catalogEntry.footprint ?? DEFAULT_FOOTPRINT;
 }
 
-// Placeholder visuals only (a flat color) until real sprites exist for
-// these items — swap in a spriteUrl per entry later; PlacedItemSprite
-// already has the one seam that would need to branch on it.
-//
-// Footprints here are deliberately non-trivial (rather than everything
-// defaulting to 1x1) so the multi-tile system is actually exercised:
-// bookshelf spans 2 columns along the back wall (still 1 row deep, since
-// onFloorAgainstWall requires *every* footprint tile to be in the
-// against-wall row — see placement.js), plant is a 2x2 floor footprint,
-// and shelf is a 4-wide wall-mounted footprint.
-export const ITEM_CATALOG = {
-  bookshelf: {
-    id: 'bookshelf',
-    name: 'Bookshelf',
-    placementType: PlacementType.ON_FLOOR_AGAINST_WALL,
-    footprint: { width: 2, height: 1 },
-    color: '#8b5e3c',
-  },
-  plant: {
-    id: 'plant',
-    name: 'Plant',
-    placementType: PlacementType.FREE_STAND,
-    footprint: { width: 2, height: 2 },
-    color: '#4cc994',
-  },
-  shelf: {
-    id: 'shelf',
-    name: 'Shelf',
-    placementType: PlacementType.ON_WALL,
-    footprint: { width: 4, height: 1 },
-    color: '#c9a15a',
-  },
-  bookshelfTall: {
-    id: 'bookshelfTall',
-    name: 'Tall Bookshelf',
-    placementType: PlacementType.ON_FLOOR_AGAINST_WALL,
-    footprint: { width: 1, height: 1 },
-    // spriteHeightPx is the item's own art canvas height, in native (1x)
-    // pixels -- deliberately independent of footprint (which only says how
-    // much floor space its base occupies). This is what lets the sprite
-    // rise up above its single floor tile instead of being squashed to
-    // fit it; see the sizing comment in Room.jsx for the general rule.
-    spriteHeightPx: 80,
-    spriteUrl: `${import.meta.env.BASE_URL}sprites/furniture/furniture-bookshelf2xtall.png`,
-    color: '#6b4a30',
-  },
-};
+// Every item lives as its own folder under public/items/<id>/ -- one JSON
+// descriptor (name/placementType/footprint/optional spriteHeightPx+color+
+// sprite filename), plus a sprite image if it has real art yet. Adding a
+// new item is just dropping a folder in; vite-plugins/itemCatalogPlugin.js
+// discovers them at build/dev time (import.meta.glob can't see into
+// public/, so a plain glob can't do this) and this module turns that raw
+// discovery into the shaped catalog the rest of the app reads. `sprite`
+// (just a filename, not a path) becomes a full spriteUrl here so every
+// consumer keeps reading a ready-to-use URL, same as before this moved to
+// per-item files.
+export const ITEM_CATALOG = Object.fromEntries(
+  DISCOVERED_ITEMS.map(({ sprite, ...entry }) => [
+    entry.id,
+    {
+      ...entry,
+      ...(sprite ? { spriteUrl: `${import.meta.env.BASE_URL}items/${entry.id}/${sprite}` } : {}),
+    },
+  ]),
+);

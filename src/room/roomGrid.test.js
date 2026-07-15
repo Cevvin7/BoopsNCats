@@ -23,12 +23,12 @@ import {
   getFootprintScreenRect,
 } from './roomGrid.js';
 
-// The four vertices below are read directly off the room art's pixel data
-// (public/sprites/room/TestFloor1.png, a 512x448 canvas) and are the
-// ground truth the whole isometric projection is calibrated against.
-const FLOOR_TOP_PERCENT = { xPercent: (256 / 512) * 100, yPercent: (193 / 448) * 100 };
+// The four vertices below are derived from the clean tile-grid constants
+// in roomGrid.js (64x32 native px per tile, a 512x448 overall canvas) --
+// the ground truth the whole isometric projection is calibrated against.
+const FLOOR_TOP_PERCENT = { xPercent: (256 / 512) * 100, yPercent: (192 / 448) * 100 };
 const FLOOR_RIGHT_PERCENT = { xPercent: 100, yPercent: (320 / 448) * 100 };
-const FLOOR_BOTTOM_PERCENT = { xPercent: (256 / 512) * 100, yPercent: (447 / 448) * 100 };
+const FLOOR_BOTTOM_PERCENT = { xPercent: (256 / 512) * 100, yPercent: (448 / 448) * 100 };
 const FLOOR_LEFT_PERCENT = { xPercent: 0, yPercent: (320 / 448) * 100 };
 
 describe('floorCellRect', () => {
@@ -63,13 +63,13 @@ describe('floorCellRect', () => {
     expect(rightCell.topPercent + rightCell.heightPercent / 2).toBeCloseTo(FLOOR_RIGHT_PERCENT.yPercent, 5);
   });
 
-  it('sizes every floor tile as a 2:1 (64x31.75 native px) diamond, regardless of position', () => {
+  it('sizes every floor tile as a 2:1 (64x32 native px) diamond, regardless of position', () => {
     const a = floorCellRect({ row: 0, col: 0 });
     const b = floorCellRect({ row: 3, col: 5 });
     const c = floorCellRect({ row: 7, col: 7 });
     for (const rect of [a, b, c]) {
       expect(rect.widthPercent).toBeCloseTo((64 / 512) * 100, 8);
-      expect(rect.heightPercent).toBeCloseTo((31.75 / 448) * 100, 8);
+      expect(rect.heightPercent).toBeCloseTo((32 / 448) * 100, 8);
     }
   });
 });
@@ -249,9 +249,9 @@ describe('getFootprintScreenRect', () => {
   it('spans a 1-row-tall, 2-column-wide floor footprint to its true tessellated width, not naive 2x scaling', () => {
     const rect = getFootprintScreenRect(floorCellRect, { row: 0, col: 3 }, { width: 2, height: 1 });
     expect(rect.leftPercent).toBeCloseTo((320 / 512) * 100, 6);
-    expect(rect.topPercent).toBeCloseTo((240.625 / 448) * 100, 6);
+    expect(rect.topPercent).toBeCloseTo((240 / 448) * 100, 6);
     expect(rect.widthPercent).toBeCloseTo((96 / 512) * 100, 6);
-    expect(rect.heightPercent).toBeCloseTo((47.625 / 448) * 100, 6);
+    expect(rect.heightPercent).toBeCloseTo((48 / 448) * 100, 6);
   });
 
   it('spans a footprint covering both multiple rows AND multiple columns to its true diamond-tessellation bounding box', () => {
@@ -264,9 +264,9 @@ describe('getFootprintScreenRect', () => {
     // footprints like the plant's 2x2.
     const rect = getFootprintScreenRect(floorCellRect, { row: 2, col: 3 }, { width: 2, height: 2 });
     expect(rect.leftPercent).toBeCloseTo((224 / 512) * 100, 6);
-    expect(rect.topPercent).toBeCloseTo((272.375 / 448) * 100, 6);
+    expect(rect.topPercent).toBeCloseTo((272 / 448) * 100, 6);
     expect(rect.widthPercent).toBeCloseTo((128 / 512) * 100, 6);
-    expect(rect.heightPercent).toBeCloseTo((63.5 / 448) * 100, 6);
+    expect(rect.heightPercent).toBeCloseTo((64 / 448) * 100, 6);
   });
 
   // Unlike the floor, a wall's row axis is a pure vertical shift with no
@@ -280,7 +280,7 @@ describe('getFootprintScreenRect', () => {
     const rect = getFootprintScreenRect(wallCellRect, { face: 'left', row: 0, col: 0 }, { width: 4, height: 1 });
     const singleCell = wallCellRect({ face: 'left', row: 0, col: 0 });
     expect(rect.widthPercent).toBeCloseTo(singleCell.widthPercent * 4, 6);
-    expect(rect.heightPercent).toBeCloseTo((95.66666666666666 / 448) * 100, 6);
+    expect(rect.heightPercent).toBeCloseTo((96 / 448) * 100, 6);
     expect(rect.heightPercent).toBeGreaterThan(singleCell.heightPercent);
   });
 });

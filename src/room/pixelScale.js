@@ -1,12 +1,7 @@
-// Native pixel resolution of the room's source art. Rendering must land on
-// an exact integer multiple of these numbers -- a fluid/percentage size
-// (the room's old width:100%; max-width:480px) almost never lands on a
-// whole multiple of a source pixel, and image-rendering: pixelated
-// (nearest-neighbor) at a non-integer ratio duplicates some source pixels
-// more than others, which is the "flat/smeared" look. Fixed integer-pixel
-// sizing is the actual fix; the CSS property alone wasn't the problem.
-export const ROOM_ART_NATIVE_WIDTH_PX = 512;
-export const ROOM_ART_NATIVE_HEIGHT_PX = 448;
+// ROOM_ART_NATIVE_WIDTH_PX/HEIGHT_PX used to live here as hardcoded
+// numbers measured off the room's old pre-rendered art; they're now
+// derived directly from the tile grid in roomGrid.js instead (see
+// ROOM_ART_NATIVE_WIDTH_PX/HEIGHT_PX there), so import from there.
 
 // The cat's own sprite sheet frame really is 32x32 (see cat-black-json.json)
 // -- unlike placed items, the cat isn't meant to fill its whole floor tile,

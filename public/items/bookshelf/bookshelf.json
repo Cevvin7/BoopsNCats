@@ -1,0 +1,7 @@
+{
+  "id": "bookshelf",
+  "name": "Bookshelf",
+  "placementType": "onFloorAgainstWall",
+  "footprint": { "width": 2, "height": 1 },
+  "color": "#8b5e3c"
+}
