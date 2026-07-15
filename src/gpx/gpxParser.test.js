@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { parseGpxDistance } from './gpxParser.js';
 import { haversineDistanceMeters } from './haversine.js';
 
-function gpxWithSegments(segments) {
+function gpxWithSegments(segments, { type } = {}) {
   const trksegXml = segments
     .map(
       (points) =>
@@ -11,7 +11,8 @@ function gpxWithSegments(segments) {
           .join('')}</trkseg>`,
     )
     .join('');
-  return `<?xml version="1.0"?><gpx><trk>${trksegXml}</trk></gpx>`;
+  const typeXml = type ? `<type>${type}</type>` : '';
+  return `<?xml version="1.0"?><gpx><trk>${typeXml}${trksegXml}</trk></gpx>`;
 }
 
 describe('parseGpxDistance', () => {
@@ -52,6 +53,24 @@ describe('parseGpxDistance', () => {
     const result = parseGpxDistance(gpxWithSegments([segmentA, segmentB]));
 
     expect(result.meters).toBeCloseTo(expectedMeters, 6);
+  });
+
+  it('reads the activity type from <trk><type> when present', () => {
+    const points = [
+      { lat: 0, lon: 0 },
+      { lat: 0.001, lon: 0 },
+    ];
+    const result = parseGpxDistance(gpxWithSegments([points], { type: 'cycling' }));
+    expect(result.activityType).toBe('cycling');
+  });
+
+  it('gives a null activity type when <type> is absent', () => {
+    const points = [
+      { lat: 0, lon: 0 },
+      { lat: 0.001, lon: 0 },
+    ];
+    const result = parseGpxDistance(gpxWithSegments([points]));
+    expect(result.activityType).toBeNull();
   });
 
   it('throws a friendly error for malformed XML', () => {
