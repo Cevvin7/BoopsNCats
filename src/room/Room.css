@@ -7,13 +7,13 @@
   flex-shrink: 0;
 }
 
-.room-art-layer {
+/* Each individual floor/wall tile (RoomTile.jsx) positions itself with
+   percentages against this full-bleed container, the same way it used to
+   position itself against the two big pre-rendered floor/wall images. */
+.room-tiles {
   position: absolute;
   inset: 0;
   z-index: 1;
-  width: 100%;
-  height: 100%;
-  image-rendering: pixelated;
   pointer-events: none;
   user-select: none;
 }

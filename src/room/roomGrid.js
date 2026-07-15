@@ -1,5 +1,3 @@
-import { ROOM_ART_NATIVE_WIDTH_PX, ROOM_ART_NATIVE_HEIGHT_PX } from './pixelScale.js';
-
 export const FLOOR_ROWS = 8;
 export const FLOOR_COLS = 8;
 
@@ -19,26 +17,47 @@ export const DEFAULT_CAT_POSITION = centerOf(FLOOR_ROWS, FLOOR_COLS);
 
 // ---- True isometric projection ----
 //
-// The room art (public/sprites/room/TestFloor1.png, TestWalls1.png) is a
-// genuine 2:1 isometric projection, not a flat top-down grid — the floor
-// is one big diamond made of 8x8 smaller diamond tiles, and the two wall
-// faces are parallelograms sharing its top vertex. Measuring the actual
-// art's pixel data (on the 512x448 native canvas) gives the floor
-// diamond's four vertices exactly:
-//   top (the room's back corner, shared with both walls): (256, 193)
-//   right:                                                 (512, 320)
-//   bottom:                                                (256, 447)
-//   left:                                                  (0,   320)
-// A flat-fraction rectangular grid (the old approach here) cannot
-// represent this: every column's true wall/floor boundary sits at a
-// different screen height, rising and falling diagonally toward the back
-// corner, so anchoring against a single flat "floor starts at 35% down"
-// line put items at the wrong height by a different amount depending on
-// which column they were in.
-const FLOOR_ORIGIN_X = 256; // native px -- the back corner, col=0,row=0
-const FLOOR_ORIGIN_Y = 193;
-const TILE_HALF_WIDTH = (512 - FLOOR_ORIGIN_X) / FLOOR_COLS; // 32
-const TILE_HALF_HEIGHT = (447 - FLOOR_ORIGIN_Y) / (FLOOR_ROWS + FLOOR_COLS); // 15.875
+// The room is built from individual floor/wall tile sprites (see
+// tiles-floor.json/tiles-wall.json and Room.jsx) laid out on a genuine
+// 2:1 isometric projection, not a flat top-down grid — the floor is one
+// big diamond made of 8x8 smaller diamond tiles, and the two wall faces
+// are parallelograms sharing its top vertex. A flat-fraction rectangular
+// grid (an earlier approach here) cannot represent this: every column's
+// true wall/floor boundary sits at a different screen height, rising and
+// falling diagonally toward the back corner, so anchoring against a
+// single flat "floor starts at 35% down" line put items at the wrong
+// height by a different amount depending on which column they were in.
+//
+// Each tile's own bounding box is a clean 64x32 native px (a true 2:1
+// diamond -- see tiles-floor.json's frameWidth/frameHeight, which every
+// tile sprite is authored at), and TILE_HALF_WIDTH/HEIGHT below are
+// exactly half of that. These are deliberately whole numbers, not
+// measurements rounded off some previous art -- since the tiles ARE the
+// art now, the grid math and the art can never quietly disagree with
+// each other the way a hand-measured legacy image could.
+const TILE_HALF_WIDTH = 32;
+const TILE_HALF_HEIGHT = 16;
+
+// The wall's own vertical rows are a separate, purely-vertical axis (see
+// wallCorner below) -- also a clean number, one full tile-height per row.
+const WALL_ROW_HEIGHT = 32;
+
+// The back corner (row=0, col=0 on the floor; row=0, col=0 on either
+// wall) is the shared origin every coordinate below is measured from.
+// Horizontally it sits at the floor diamond's own horizontal center
+// (half its full width); vertically it sits wherever the wall's own
+// full height (WALL_ROWS tall) ends and the floor begins.
+const FLOOR_ORIGIN_X = FLOOR_COLS * TILE_HALF_WIDTH; // 256
+const FLOOR_ORIGIN_Y = WALL_ROWS * WALL_ROW_HEIGHT; // 192
+
+// The room's overall native-px canvas size -- derived the same way every
+// other measurement here is, rather than a separately hardcoded number
+// that could drift out of sync with the grid it's supposed to fit.
+// Width spans the floor diamond's full left-to-right extent (two
+// diagonal half-widths per column); height spans from the top of the
+// wall down to the floor diamond's own bottom vertex.
+export const ROOM_ART_NATIVE_WIDTH_PX = FLOOR_COLS * TILE_HALF_WIDTH * 2;
+export const ROOM_ART_NATIVE_HEIGHT_PX = FLOOR_ORIGIN_Y + (FLOOR_ROWS + FLOOR_COLS) * TILE_HALF_HEIGHT;
 
 // A "corner" is a lattice point between tiles: cell (row, col) spans from
 // corner(row, col) to corner(row+1, col+1). This is the standard 2:1
@@ -64,8 +83,6 @@ function floorCorner({ row, col }) {
 // point straight down, with none of the horizontal skew that col has —
 // verticality doesn't skew in an isometric projection the way depth
 // along the ground plane does.
-const WALL_ROW_HEIGHT = FLOOR_ORIGIN_Y / WALL_ROWS; // the wall's full vertical extent (0 to the back corner), divided across its rows
-
 function wallCorner({ face, row, col }) {
   const signX = face === 'left' ? -1 : 1;
   return {

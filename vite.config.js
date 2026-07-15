@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
+import { itemCatalogPlugin } from './vite-plugins/itemCatalogPlugin.js';
 
 // GitHub Pages serves a project repo like this one from a subpath
 // (https://cevvin7.github.io/BoopsNCats/), not the domain root, so every
@@ -18,6 +19,7 @@ export default defineConfig(({ command }) => ({
   },
   plugins: [
     react(),
+    itemCatalogPlugin(),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['icons/*.svg'],

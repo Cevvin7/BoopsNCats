@@ -5,9 +5,25 @@ import { ITEM_CATALOG, getFootprint } from '../inventory/itemCatalog.js';
 import { regionForPlacementType, orientedFootprintForPlacedItem } from '../inventory/placement.js';
 import { getPlacedFace } from '../inventory/placedItemsModel.js';
 import { TileGridOverlay } from './TileGridOverlay.jsx';
-import { floorCellRect, wallCellRect, floorPointPosition, getFootprintScreenRect } from './roomGrid.js';
+import { RoomTile } from './RoomTile.jsx';
+import { tileVariantIndex } from './tileTheme.js';
+import {
+  FLOOR_ROWS,
+  FLOOR_COLS,
+  WALL_FACES,
+  WALL_ROWS,
+  WALL_COLS,
+  floorCellRect,
+  wallCellRect,
+  floorPointPosition,
+  getFootprintScreenRect,
+  ROOM_ART_NATIVE_WIDTH_PX,
+  ROOM_ART_NATIVE_HEIGHT_PX,
+} from './roomGrid.js';
 import { sortByDepth } from './depthSort.js';
-import { CAT_SPRITE_NATIVE_PX, ROOM_ART_NATIVE_WIDTH_PX, ROOM_ART_NATIVE_HEIGHT_PX, PIXEL_SCALE } from './pixelScale.js';
+import { CAT_SPRITE_NATIVE_PX, PIXEL_SCALE } from './pixelScale.js';
+import tilesFloorTheme from './tiles-floor.json';
+import tilesWallTheme from './tiles-wall.json';
 import './Room.css';
 
 // import.meta.env.BASE_URL reflects vite.config.js's configured base
@@ -15,8 +31,42 @@ import './Room.css';
 // here would always resolve to the domain root and 404 once the site is
 // served from a subpath, since Vite only rewrites real imports and
 // index.html's own tags, not plain string literals in JS.
-const FLOOR_ART_URL = `${import.meta.env.BASE_URL}sprites/room/TestFloor1.png`;
-const WALL_ART_URL = `${import.meta.env.BASE_URL}sprites/room/TestWalls1.png`;
+const FLOOR_TILE_SHEET_URL = `${import.meta.env.BASE_URL}sprites/room/tiles-floor.png`;
+const WALL_TILE_SHEET_URL = `${import.meta.env.BASE_URL}sprites/room/tiles-walls.png`;
+
+// Which theme is "active" for each surface -- there's no room-theme
+// picker/shop yet, so this is just the first theme each JSON declares
+// until one exists.
+const activeFloorTheme = tilesFloorTheme.themes[0];
+const activeWallTheme = tilesWallTheme.themes[0];
+
+// Every tile's own cell rect + chosen sprite-sheet frame, computed once
+// at module load rather than every render -- none of this depends on
+// props or state, it's the same 64 floor tiles and 96 wall tiles
+// (2 faces x WALL_ROWS x WALL_COLS) every time.
+const FLOOR_TILES = [];
+for (let row = 0; row < FLOOR_ROWS; row++) {
+  for (let col = 0; col < FLOOR_COLS; col++) {
+    FLOOR_TILES.push({
+      key: `${row}-${col}`,
+      rect: floorCellRect({ row, col }),
+      frameIndex: tileVariantIndex(activeFloorTheme, row, col),
+    });
+  }
+}
+
+const WALL_TILES = [];
+for (const face of WALL_FACES) {
+  for (let row = 0; row < WALL_ROWS; row++) {
+    for (let col = 0; col < WALL_COLS; col++) {
+      WALL_TILES.push({
+        key: `${face}-${row}-${col}`,
+        rect: wallCellRect({ face, row, col }),
+        frameIndex: tileVariantIndex(activeWallTheme, row, col),
+      });
+    }
+  }
+}
 
 // The room always renders at a fixed pixel size -- an exact integer
 // multiple (PIXEL_SCALE) of the source art's 512x448 -- so RoomViewport
@@ -187,8 +237,26 @@ export function Room({ catHappiness, catNeedsAttention, catWander, placedItems, 
 
   return (
     <div className="room" style={{ width: `${ROOM_WIDTH_PX}px`, height: `${ROOM_HEIGHT_PX}px` }}>
-      <img className="room-art-layer" src={FLOOR_ART_URL} alt="" />
-      <img className="room-art-layer" src={WALL_ART_URL} alt="" />
+      <div className="room-tiles">
+        {WALL_TILES.map((tile) => (
+          <RoomTile
+            key={tile.key}
+            rect={tile.rect}
+            sheetUrl={WALL_TILE_SHEET_URL}
+            frameCount={tilesWallTheme.frameCount}
+            frameIndex={tile.frameIndex}
+          />
+        ))}
+        {FLOOR_TILES.map((tile) => (
+          <RoomTile
+            key={tile.key}
+            rect={tile.rect}
+            sheetUrl={FLOOR_TILE_SHEET_URL}
+            frameCount={tilesFloorTheme.frameCount}
+            frameIndex={tile.frameIndex}
+          />
+        ))}
+      </div>
 
       <div className="room-entities">{sceneEntities.map((entity) => entity.node)}</div>
 

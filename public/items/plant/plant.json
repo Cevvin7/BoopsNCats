@@ -1,0 +1,7 @@
+{
+  "id": "plant",
+  "name": "Plant",
+  "placementType": "freeStand",
+  "footprint": { "width": 2, "height": 2 },
+  "color": "#4cc994"
+}
