@@ -188,7 +188,6 @@ export function Room({ catHappiness, catNeedsAttention, catWander, placedItems, 
         <TileGridOverlay
           positions={roomEditor.highlightedPositions}
           region={activeRegion}
-          footprint={roomEditor.activeFootprint}
           onTapTile={roomEditor.tapTile}
         />
       )}

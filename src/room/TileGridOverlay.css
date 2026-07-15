@@ -4,29 +4,56 @@
   z-index: 3;
 }
 
-/* Visual-only footprint preview — overlaps freely with neighboring
-   anchors' previews, so it never intercepts clicks. */
-.tile-highlight-preview {
+/* Positioned at the tile's own center point (in room-relative percent),
+   sized to exactly the cube glyph (36x36) so the translate below centers
+   the cube itself on that point -- not an average over the cube+beam, so
+   the beam and the 44px tap target (both positioned relative to this same
+   box, see below) end up precisely aligned with the cube too. */
+.tile-marker-anchor {
   position: absolute;
-  box-sizing: border-box;
-  border: 2px solid rgba(76, 201, 148, 0.5);
-  background: rgba(76, 201, 148, 0.18);
-  border-radius: 4px;
+  width: 36px;
+  height: 36px;
+  transform: translate(-50%, -50%);
+}
+
+.tile-marker-cube {
+  position: absolute;
+  inset: 0;
+  width: 36px;
+  height: 36px;
   pointer-events: none;
 }
 
-/* The real click target: always exactly one cell, so it never overlaps
-   another anchor's click target even when footprint previews do. */
-.tile-highlight-anchor {
+/* Sits flush above the cube's own top edge (bottom: 100%) and fades from
+   solid at that base to fully transparent at its own top end -- a faint
+   "beacon" rising off the marker. Deliberately plain white/CSS, not
+   themed: same functional-marker category as this file's old green
+   highlight was, constant regardless of light/dark mode. */
+.tile-marker-beam {
   position: absolute;
-  box-sizing: border-box;
-  border: 2px solid rgba(76, 201, 148, 0.9);
-  background: rgba(76, 201, 148, 0.5);
-  border-radius: 4px;
-  padding: 0;
-  cursor: pointer;
+  left: 50%;
+  bottom: 100%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 20px;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0) 0%, #ffffff 100%);
+  pointer-events: none;
 }
 
-.tile-highlight-anchor:hover {
-  background: rgba(76, 201, 148, 0.75);
+/* The real click target -- sized to comfortable accessible tap-target
+   dimensions (44x44) even though the cube it's centered on is smaller,
+   and invisible since the marker itself is the only thing meant to be
+   seen. */
+.tile-marker-tap-target {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
 }
