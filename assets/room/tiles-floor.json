@@ -1,0 +1,9 @@
+{
+  "frameWidth": 64,
+  "frameHeight": 32,
+  "themes": [
+    { "id": "blueCheckers", "name": "Blue Checkerboard", "range": [0, 1] },
+    { "id": "classicCheckers", "name": "Classic Checkerboard", "range": [2, 3] },
+    { "id": "astroTurf", "name": "Astro Turf", "range": [4, 4] },
+  ]
+}
