@@ -3,7 +3,7 @@
   "frameHeight": 48,
   "frameCount": 2,
   "themes": [
-    { "id": "woodSlats", "name": "Vertical Slats", "range": [0, 0] },
-    { "id": "grayWave", "name": "Wavy Gray", "range": [1, 1] }
+    { "id": "woodSlats", "name": "Vertical Slats", "range": { "left": [0, 0], "right": [0, 0] } },
+    { "id": "grayWave", "name": "Wavy Gray", "range": { "left": [1, 1], "right": [1, 1] } }
   ]
 }
