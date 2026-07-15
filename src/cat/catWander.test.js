@@ -7,6 +7,7 @@ import {
   randomIdleIntervalMs,
   randomWanderIntervalMs,
   walkDurationMs,
+  walkFacingLeft,
 } from './catWander.js';
 
 // A queue-based fake random -- returns each value in sequence, so tests
@@ -103,5 +104,31 @@ describe('walkDurationMs', () => {
     const short = walkDurationMs(1);
     const long = walkDurationMs(3);
     expect(long).toBeCloseTo(short * 3, 8);
+  });
+});
+
+describe('walkFacingLeft', () => {
+  it('faces right when col increases with row held fixed (toward the right wall)', () => {
+    expect(walkFacingLeft({ row: 0, col: 0 }, { row: 0, col: 5 })).toBe(false);
+  });
+
+  it('faces left when col decreases with row held fixed (toward the left wall)', () => {
+    expect(walkFacingLeft({ row: 0, col: 5 }, { row: 0, col: 0 })).toBe(true);
+  });
+
+  it('faces left when row increases with col held fixed (toward the left wall)', () => {
+    expect(walkFacingLeft({ row: 0, col: 0 }, { row: 3, col: 0 })).toBe(true);
+  });
+
+  it('faces right when row decreases with col held fixed (toward the right wall)', () => {
+    expect(walkFacingLeft({ row: 3, col: 0 }, { row: 0, col: 0 })).toBe(false);
+  });
+
+  it('returns null when the walk has no left-right screen motion at all (row and col change equally)', () => {
+    expect(walkFacingLeft({ row: 2, col: 2 }, { row: 5, col: 5 })).toBeNull();
+  });
+
+  it('returns null for a zero-distance walk', () => {
+    expect(walkFacingLeft({ row: 2, col: 2 }, { row: 2, col: 2 })).toBeNull();
   });
 });

@@ -9,6 +9,7 @@ import {
   randomIdleIntervalMs,
   randomWanderIntervalMs,
   walkDurationMs,
+  walkFacingLeft,
 } from './catWander.js';
 
 // DEFAULT_CAT_POSITION is a tile INDEX (its back corner in continuous grid
@@ -34,6 +35,10 @@ export function useCatWander({ placedItems, paused = false }) {
   const [status, setStatus] = useState('idle'); // 'idle' | 'walking'
   const [idleAnimation, setIdleAnimation] = useState(() => pickIdleAnimation());
   const [walk, setWalk] = useState(null); // { from, to, startTime, durationMs }
+  // Sprite faces right by default; a walk that moves the cat purely
+  // toward/away from the camera (no left-right screen motion) leaves
+  // this exactly as it was, rather than snapping back to a default.
+  const [facingLeft, setFacingLeft] = useState(false);
 
   const positionRef = useRef(position);
   positionRef.current = position;
@@ -51,6 +56,9 @@ export function useCatWander({ placedItems, paused = false }) {
     const from = positionRef.current;
     const to = randomPointInTile(destinationTile);
     const distance = Math.hypot(to.row - from.row, to.col - from.col);
+
+    const facing = walkFacingLeft(from, to);
+    if (facing !== null) setFacingLeft(facing);
 
     setWalk({ from, to, startTime: performance.now(), durationMs: walkDurationMs(distance) });
     setStatus('walking');
@@ -110,5 +118,6 @@ export function useCatWander({ placedItems, paused = false }) {
   return {
     position,
     animationName: status === 'walking' ? WALK_ANIMATION : idleAnimation,
+    facingLeft,
   };
 }

@@ -2,7 +2,7 @@ import { CatSprite } from '../cat/CatSprite.jsx';
 import { PlacedItemSprite } from '../inventory/PlacedItemSprite.jsx';
 import { ItemActionPopup } from '../inventory/ItemActionPopup.jsx';
 import { ITEM_CATALOG, getFootprint } from '../inventory/itemCatalog.js';
-import { regionForPlacementType } from '../inventory/placement.js';
+import { regionForPlacementType, orientedFootprintForPlacedItem } from '../inventory/placement.js';
 import { getPlacedFace } from '../inventory/placedItemsModel.js';
 import { TileGridOverlay } from './TileGridOverlay.jsx';
 import { floorCellRect, wallCellRect, floorPointPosition, getFootprintScreenRect } from './roomGrid.js';
@@ -54,14 +54,17 @@ export const ROOM_HEIGHT_PX = ROOM_ART_NATIVE_HEIGHT_PX * PIXEL_SCALE;
 // they keep rendering exactly as before.
 function screenRectForPlacedItem(placedItem) {
   const catalogEntry = ITEM_CATALOG[placedItem.itemId];
-  const footprint = getFootprint(catalogEntry);
   const region = regionForPlacementType(catalogEntry.placementType);
 
   if (region === 'wall') {
     const anchor = { face: getPlacedFace(placedItem), row: placedItem.row, col: placedItem.col };
-    return { ...getFootprintScreenRect(wallCellRect, anchor, footprint), region };
+    return { ...getFootprintScreenRect(wallCellRect, anchor, getFootprint(catalogEntry)), region };
   }
-  return { ...getFootprintScreenRect(floorCellRect, placedItem, footprint), region };
+  // onFloorAgainstWall items against the left wall need their catalog
+  // footprint transposed (see placement.js's orientedFootprintForPlacedItem)
+  // or their rendered box would use the wrong axis; freeStand items pass
+  // through unchanged.
+  return { ...getFootprintScreenRect(floorCellRect, placedItem, orientedFootprintForPlacedItem(placedItem)), region };
 }
 
 // The Y coordinate (room-relative percent) of an entity's own "contact
@@ -127,7 +130,12 @@ export function Room({ catHappiness, catNeedsAttention, catWander, placedItems, 
           transform: 'translateX(-50%)',
         }}
       >
-        <CatSprite happiness={catHappiness} needsAttention={catNeedsAttention} animationName={catWander.animationName} />
+        <CatSprite
+          happiness={catHappiness}
+          needsAttention={catNeedsAttention}
+          animationName={catWander.animationName}
+          flipped={catWander.facingLeft}
+        />
       </div>
     ),
   };
