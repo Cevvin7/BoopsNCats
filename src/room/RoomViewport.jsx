@@ -1,45 +1,50 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Room, ROOM_WIDTH_PX, ROOM_HEIGHT_PX } from './Room.jsx';
 import { useCameraPan } from './useCameraPan.js';
+import { useHudVariant } from './useHudVariant.js';
+import { HudButton } from './HudButton.jsx';
 import { UploadScreen } from '../upload/UploadScreen.jsx';
 import { SettingsScreen } from '../settings/SettingsScreen.jsx';
+import {
+  HUD_FRAME_SPECS,
+  VIEWPORT_LEFT_PX,
+  VIEWPORT_TOP_PX,
+  BUTTON_HOTSPOT_X_PX,
+  HUD_FOOTER_LEFT_PX,
+  HUD_FOOTER_BOTTOM_PX,
+  ENERGY_PIP_COUNT,
+  ENERGY_PIP_WIDTH_PX,
+  ENERGY_PIP_HEIGHT_PX,
+  ENERGY_PIP_GAP_PX,
+  ENERGY_ROW_WIDTH_PX,
+} from './hudLayout.js';
 import './RoomViewport.css';
-
-const FRAME_WIDTH_PX = 380;
-const FRAME_HEIGHT_PX = 560;
-// Where the frame art's transparent interior hole sits, in its own pixels.
-const VIEWPORT_LEFT_PX = 20;
-const VIEWPORT_TOP_PX = 60;
-const VIEWPORT_WIDTH_PX = 340;
-const VIEWPORT_HEIGHT_PX = 460;
 
 // See the matching comment in Room.jsx: BASE_URL keeps this correct under
 // both dev ('/') and the production subpath ('/BoopsNCats/').
-const HUD_FRAME_URL = `${import.meta.env.BASE_URL}sprites/ui/hud-background.png`;
-const iconUrl = (name) => `${import.meta.env.BASE_URL}sprites/ui/icon-${name}.png`;
+const hudFrameUrl = (variant) =>
+  `${import.meta.env.BASE_URL}sprites/ui/hud-background${variant === 'xl' ? 'XL' : ''}.png`;
 
-// Measured directly from the frame art's pixel data (three purple
-// circles, each exactly 40px in diameter): centers at (254.5,29.5),
-// (299.5,29.5), (344.5,29.5) in the frame's own 380x560 space -- which is
-// also plain CSS px, since the frame (unlike the room) isn't scaled by
-// PIXEL_SCALE.
-const HIT_AREA_DIAMETER_PX = 40;
-const HIT_AREA_POSITIONS = {
-  edit: { centerX: 254.5, centerY: 29.5 },
-  upload: { centerX: 299.5, centerY: 29.5 },
-  settings: { centerX: 344.5, centerY: 29.5 },
-};
+// Left to right, matching both the frame art and BUTTON_HOTSPOT_X_PX:
+// inventory (today's edit-mode toggle -- see the note on onTapInventory),
+// upload, settings.
+const HUD_BUTTONS = [
+  { key: 'inventory', spriteName: 'inventory', label: 'Inventory' },
+  { key: 'upload', spriteName: 'upload', label: 'Log a walk' },
+  { key: 'settings', spriteName: 'settings', label: 'Settings' },
+];
 
 /**
- * Clips the (much larger) room down to a fixed 340x460 window. In the
- * default 'room' screen, that window lets the player drag-to-pan around
- * it, with the static decorative frame image overlaid on top (purely
- * visual -- pointer-events: none, so drags always reach the room
- * underneath it). Tapping the Upload or Settings hit-areas (overlaid on
- * the frame art's own purple circles) swaps that same window to an
- * embedded screen instead, in place of the room -- camera panning only
- * makes sense for the room, so pan handlers/transform are scoped to the
- * 'room' screen alone.
+ * Clips the (much larger) room down to a fixed-size window sized to
+ * whichever HUD variant is currently active (see useHudVariant.js). In
+ * the default 'room' screen, that window lets the player drag-to-pan
+ * around it, with the static decorative frame image overlaid on top
+ * (purely visual -- pointer-events: none, so drags always reach the room
+ * underneath it). Tapping the Upload or Settings buttons (overlaid on the
+ * frame art's own button hotspots) swaps that same window to an embedded
+ * screen instead, in place of the room -- camera panning only makes
+ * sense for the room, so pan handlers/transform are scoped to the 'room'
+ * screen alone.
  */
 export function RoomViewport({
   screen,
@@ -56,29 +61,51 @@ export function RoomViewport({
   onFactoryReset,
   ...roomProps
 }) {
+  const variant = useHudVariant();
+  const spec = HUD_FRAME_SPECS[variant];
+
+  // Reset per variant -- a 404 on the standard frame shouldn't keep the
+  // fallback showing forever if the player's viewport later crosses the
+  // breakpoint into the XL frame (a different URL, so it deserves its own
+  // chance to load).
   const [frameFailed, setFrameFailed] = useState(false);
+  useEffect(() => {
+    setFrameFailed(false);
+  }, [variant]);
+
   const { offset, handlers } = useCameraPan({
     contentWidth: ROOM_WIDTH_PX,
     contentHeight: ROOM_HEIGHT_PX,
-    viewportWidth: VIEWPORT_WIDTH_PX,
-    viewportHeight: VIEWPORT_HEIGHT_PX,
+    viewportWidth: spec.viewportWidthPx,
+    viewportHeight: spec.viewportHeightPx,
   });
 
-  const hitAreas = [
-    { key: 'edit', label: 'Edit room', onTap: onTapEdit, active: editModeActive },
-    { key: 'upload', label: 'Log a walk', onTap: onTapUpload, active: screen === 'upload' },
-    { key: 'settings', label: 'Settings', onTap: onTapSettings, active: screen === 'settings' },
-  ];
+  // button-inventory will eventually open a shopping/placement overlay of
+  // its own (a future prompt) -- for now it's wired to the same
+  // edit-mode toggle the pencil button used to be.
+  const buttonHandlers = {
+    inventory: onTapEdit,
+    upload: onTapUpload,
+    settings: onTapSettings,
+  };
+  const buttonActive = {
+    inventory: editModeActive,
+    upload: screen === 'upload',
+    settings: screen === 'settings',
+  };
 
   return (
-    <div className="room-viewport-frame" style={{ width: `${FRAME_WIDTH_PX}px`, height: `${FRAME_HEIGHT_PX}px` }}>
+    <div
+      className="room-viewport-frame"
+      style={{ width: `${spec.frameWidthPx}px`, height: `${spec.frameHeightPx}px` }}
+    >
       <div
         className={`room-viewport-window${screen === 'room' ? '' : ' room-viewport-window--panel'}`}
         style={{
           left: `${VIEWPORT_LEFT_PX}px`,
           top: `${VIEWPORT_TOP_PX}px`,
-          width: `${VIEWPORT_WIDTH_PX}px`,
-          height: `${VIEWPORT_HEIGHT_PX}px`,
+          width: `${spec.viewportWidthPx}px`,
+          height: `${spec.viewportHeightPx}px`,
         }}
         {...(screen === 'room' ? handlers : {})}
       >
@@ -98,40 +125,51 @@ export function RoomViewport({
         )}
       </div>
 
-      {/* The frame art (including its own painted circles) has to sit
-          BELOW the hit-area buttons/icons and the Boops counter in DOM
-          order, or those would be visually hidden underneath it --
+      {/* The frame art has to sit BELOW the title/buttons/footer in DOM
+          order, or those would be visually hidden underneath it (its
+          header/footer bands are opaque, not just decorative trim) --
           pointer-events: none on the image is what keeps it from
           blocking clicks/drags either way. */}
       {!frameFailed && (
-        <img className="room-viewport-hud" src={HUD_FRAME_URL} alt="" onError={() => setFrameFailed(true)} />
+        <img
+          className="room-viewport-hud"
+          src={hudFrameUrl(variant)}
+          alt=""
+          onError={() => setFrameFailed(true)}
+        />
       )}
 
-      {hitAreas.map(({ key, label, onTap, active }) => {
-        const { centerX, centerY } = HIT_AREA_POSITIONS[key];
-        return (
-          <button
-            key={key}
-            type="button"
-            className={`room-viewport-hit-area${active ? ' room-viewport-hit-area--active' : ''}`}
-            style={{
-              left: `${centerX - HIT_AREA_DIAMETER_PX / 2}px`,
-              top: `${centerY - HIT_AREA_DIAMETER_PX / 2}px`,
-              width: `${HIT_AREA_DIAMETER_PX}px`,
-              height: `${HIT_AREA_DIAMETER_PX}px`,
-            }}
-            onClick={onTap}
-            aria-label={label}
-            title={label}
-          >
-            <img className="room-viewport-hit-area-icon" src={iconUrl(key)} alt="" />
-          </button>
-        );
-      })}
+      <div className="room-viewport-title">Boops N Cats</div>
 
-      <div className="room-viewport-boops">
-        <span className="room-viewport-boops-label">Boops</span>
-        <span className="room-viewport-boops-count">{boops.toLocaleString()}</span>
+      {HUD_BUTTONS.map(({ key, spriteName, label }, index) => (
+        <HudButton
+          key={key}
+          spriteName={spriteName}
+          centerX={BUTTON_HOTSPOT_X_PX[index]}
+          centerY={spec.buttonHotspotYPx}
+          active={buttonActive[key]}
+          onTap={buttonHandlers[key]}
+          label={label}
+        />
+      ))}
+
+      <div
+        className="room-viewport-footer"
+        style={{ left: `${HUD_FOOTER_LEFT_PX}px`, bottom: `${HUD_FOOTER_BOTTOM_PX}px`, width: `${ENERGY_ROW_WIDTH_PX}px` }}
+      >
+        <div className="room-viewport-boops-row">
+          <span className="room-viewport-boops-label">Boops</span>
+          <span className="room-viewport-boops-count">{boops.toLocaleString()}</span>
+        </div>
+        <div className="room-viewport-energy-row" style={{ gap: `${ENERGY_PIP_GAP_PX}px` }}>
+          {Array.from({ length: ENERGY_PIP_COUNT }, (_, index) => (
+            <span
+              key={index}
+              className="room-viewport-energy-pip"
+              style={{ width: `${ENERGY_PIP_WIDTH_PX}px`, height: `${ENERGY_PIP_HEIGHT_PX}px` }}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );

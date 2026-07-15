@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 // A gesture only starts panning once it moves past this many pixels, so a
 // plain tap (selecting a tile or a placed item underneath the viewport)
@@ -26,6 +26,18 @@ export function useCameraPan({ contentWidth, contentHeight, viewportWidth, viewp
     x: clamp(maxOffsetX / 2, 0, maxOffsetX),
     y: clamp(maxOffsetY / 2, 0, maxOffsetY),
   }));
+
+  // The viewport itself now switches size at runtime (HUD standard/XL
+  // variants -- see useHudVariant.js), which the original one-time initial
+  // state above doesn't account for. Re-clamping whenever the bounds
+  // change keeps an existing pan offset valid instead of leaving it
+  // pointing past the (possibly now-smaller) content edge.
+  useEffect(() => {
+    setOffset((prev) => ({
+      x: clamp(prev.x, 0, maxOffsetX),
+      y: clamp(prev.y, 0, maxOffsetY),
+    }));
+  }, [maxOffsetX, maxOffsetY]);
 
   const dragRef = useRef(null);
 

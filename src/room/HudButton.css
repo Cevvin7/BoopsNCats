@@ -1,0 +1,12 @@
+.hud-button {
+  position: absolute;
+  width: 44px;
+  height: 49px;
+  background-repeat: no-repeat;
+  background-size: 88px 49px;
+  image-rendering: pixelated;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
