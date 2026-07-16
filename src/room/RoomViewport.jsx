@@ -5,6 +5,9 @@ import { useHudVariant } from './useHudVariant.js';
 import { HudButton } from './HudButton.jsx';
 import { UploadScreen } from '../upload/UploadScreen.jsx';
 import { SettingsScreen } from '../settings/SettingsScreen.jsx';
+import { ShopScreen } from '../inventory/ShopScreen.jsx';
+import { BoopsFloatLayer } from '../effects/BoopsFloatLayer.jsx';
+import { ConfettiBurst } from '../effects/ConfettiBurst.jsx';
 import {
   HUD_FRAME_SPECS,
   VIEWPORT_LEFT_PX,
@@ -26,8 +29,8 @@ const hudFrameUrl = (variant) =>
   `${import.meta.env.BASE_URL}sprites/ui/hud-background${variant === 'xl' ? 'XL' : ''}.png`;
 
 // Left to right, matching both the frame art and BUTTON_HOTSPOT_X_PX:
-// inventory (today's edit-mode toggle -- see the note on onTapInventory),
-// upload, settings.
+// inventory (opens the shop -- see onTapEdit's name/App.jsx for why it's
+// still called "edit" under the hood), upload, settings.
 const HUD_BUTTONS = [
   { key: 'inventory', spriteName: 'inventory', label: 'Inventory' },
   { key: 'upload', spriteName: 'upload', label: 'Log a walk' },
@@ -59,6 +62,11 @@ export function RoomViewport({
   onToggleTheme,
   onRedeemCode,
   onFactoryReset,
+  boopsFloaters,
+  confettiActive,
+  inventory,
+  onBuyItem,
+  onPlaceItem,
   ...roomProps
 }) {
   const variant = useHudVariant();
@@ -80,9 +88,6 @@ export function RoomViewport({
     viewportHeight: spec.viewportHeightPx,
   });
 
-  // button-inventory will eventually open a shopping/placement overlay of
-  // its own (a future prompt) -- for now it's wired to the same
-  // edit-mode toggle the pencil button used to be.
   const buttonHandlers = {
     inventory: onTapEdit,
     upload: onTapUpload,
@@ -114,6 +119,9 @@ export function RoomViewport({
             <Room {...roomProps} />
           </div>
         )}
+        {screen === 'shop' && (
+          <ShopScreen inventory={inventory} boops={boops} onBuyItem={onBuyItem} onPlaceItem={onPlaceItem} />
+        )}
         {screen === 'upload' && <UploadScreen onResult={onUploadResult} lastUpload={lastUpload} />}
         {screen === 'settings' && (
           <SettingsScreen
@@ -138,6 +146,12 @@ export function RoomViewport({
           onError={() => setFrameFailed(true)}
         />
       )}
+
+      {/* Above the frame art and every embedded screen -- boops can be
+          earned from more than one of them (the room's cat, the upload
+          screen), so this stays mounted regardless of which is showing. */}
+      <BoopsFloatLayer floaters={boopsFloaters} />
+      <ConfettiBurst active={confettiActive} />
 
       <div className="room-viewport-title">Boops N Cats</div>
 

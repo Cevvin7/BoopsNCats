@@ -1,15 +1,14 @@
 import { ITEM_CATALOG } from './itemCatalog.js';
 
 export const INVENTORY_CAP = 32;
-// Seeded starting quantity for this phase's 3 test items — enough to test
-// placing multiple instances of the same item without a "give item" dev
-// tool. Real quantities will come from the shop later.
-const SEEDED_QUANTITY = 3;
 
+// Every catalog item starts owned at 0 -- the shop (ShopScreen.jsx) is now
+// the only way to acquire one, so a fresh player shouldn't already own
+// three of everything for free.
 export function defaultInventory() {
   return Object.keys(ITEM_CATALOG).map((itemId) => ({
     itemId,
-    quantity: SEEDED_QUANTITY,
+    quantity: 0,
     cap: INVENTORY_CAP,
   }));
 }

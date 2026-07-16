@@ -6,6 +6,7 @@ import {
   recordActivityUpload as recordCatActivityUpload,
   needsAttention as computeNeedsAttention,
 } from '../cat/happinessModel.js';
+import { BOOP_REWARD_AMOUNT, canClaimBoopReward } from '../cat/boopReward.js';
 import { ITEM_CATALOG, getFootprint } from '../inventory/itemCatalog.js';
 import { defaultInventory, decrementQuantity, incrementQuantity } from '../inventory/inventoryModel.js';
 import {
@@ -32,6 +33,7 @@ function defaultState() {
     inventory: defaultInventory(),
     placedItems: [],
     redeemedCodes: [],
+    lastBoopClaim: null,
   };
 }
 
@@ -46,15 +48,21 @@ export function GameStateProvider({ children }) {
     [setState],
   );
 
-  // Hook point for the future shop (feeding/toys/decor): this is the API a
-  // "buy" button would call. Not wired to any UI yet.
-  const spendBoops = useCallback(
-    (amount) => {
-      if (state.boops < amount) return false;
-      setState((prev) => ({ ...prev, boops: prev.boops - amount }));
-      return true;
+  // The shop's "buy" action -- spends boops and grants one more of itemId
+  // in the same update, so a purchase can never be observed as "boops
+  // spent but inventory unchanged" (or vice versa) partway through.
+  // Returns whether the purchase actually went through.
+  const buyItem = useCallback(
+    (itemId, cost) => {
+      let purchased = false;
+      setState((prev) => {
+        if (prev.boops < cost) return prev;
+        purchased = true;
+        return { ...prev, boops: prev.boops - cost, inventory: incrementQuantity(prev.inventory, itemId) };
+      });
+      return purchased;
     },
-    [state.boops, setState],
+    [setState],
   );
 
   // Re-derives happiness from the two stored timestamps rather than storing
@@ -73,6 +81,21 @@ export function GameStateProvider({ children }) {
   // handler that awards boops for a parsed GPX file.
   const recordActivityUpload = useCallback(() => {
     setState((prev) => ({ ...prev, cat: recordCatActivityUpload(prev.cat, Date.now()) }));
+  }, [setState]);
+
+  // Tapping the cat itself (not the upload flow) -- once per local day,
+  // reset at local noon like happiness decay. Returns whether the claim
+  // actually went through so the UI only plays its reward effect on a
+  // real grant, not on every tap.
+  const claimBoopReward = useCallback(() => {
+    let claimed = false;
+    setState((prev) => {
+      const now = Date.now();
+      if (!canClaimBoopReward(prev.lastBoopClaim, now)) return prev;
+      claimed = true;
+      return { ...prev, boops: prev.boops + BOOP_REWARD_AMOUNT, lastBoopClaim: now };
+    });
+    return claimed;
   }, [setState]);
 
   // Places one unit of itemId from inventory onto the room. `position` is
@@ -221,8 +244,9 @@ export function GameStateProvider({ children }) {
       ...state,
       needsAttention: computeNeedsAttention(state.cat),
       addBoops,
-      spendBoops,
+      buyItem,
       recordActivityUpload,
+      claimBoopReward,
       placeItem,
       movePlacedItem,
       flipPlacedItem,
@@ -233,8 +257,9 @@ export function GameStateProvider({ children }) {
     [
       state,
       addBoops,
-      spendBoops,
+      buyItem,
       recordActivityUpload,
+      claimBoopReward,
       placeItem,
       movePlacedItem,
       flipPlacedItem,

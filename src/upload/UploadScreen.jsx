@@ -15,10 +15,7 @@ export function UploadScreen({ onResult, lastUpload }) {
           <p>
             <strong>{lastUpload.fileName}</strong>
           </p>
-          <p>
-            {lastUpload.miles.toFixed(2)} mi ({lastUpload.km.toFixed(2)} km)
-          </p>
-          <p>+{lastUpload.boops.toLocaleString()} boops earned</p>
+          <p className="upload-summary-boops">+{lastUpload.boops.toLocaleString()} boops earned!</p>
         </div>
       )}
     </div>

@@ -8,6 +8,8 @@
   --hud-accent-color: #f4c94d;
   --hud-title-font-size: 28px;
   --hud-body-font-size: 20px;
+  --hud-boops-label-font-size: 22px;
+  --hud-boops-count-font-size: 34px;
   --hud-energy-pip-color: #f4c94d;
   position: relative;
   margin: 0 auto;
@@ -88,19 +90,20 @@
 
 .room-viewport-boops-row {
   display: flex;
-  justify-content: space-between;
-  align-items: baseline;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1;
 }
 
 .room-viewport-boops-label {
-  font-size: var(--hud-body-font-size);
+  font-size: var(--hud-boops-label-font-size);
   color: var(--hud-accent-color);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
 .room-viewport-boops-count {
-  font-size: var(--hud-body-font-size);
+  font-size: var(--hud-boops-count-font-size);
   font-weight: 700;
   color: var(--hud-accent-color);
 }

@@ -20,3 +20,9 @@
 .upload-summary p {
   margin: 0.25rem 0;
 }
+
+.upload-summary-boops {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-accent);
+}

@@ -1,0 +1,95 @@
+.shop-screen {
+  padding: 1rem;
+}
+
+.shop-screen h2 {
+  font-size: 1rem;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 0.75rem;
+}
+
+.shop-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.shop-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.shop-item-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem;
+  border: none;
+  border-radius: 8px;
+  background: rgba(var(--color-text-muted-rgb), 0.1);
+  color: inherit;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.shop-item-main:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.shop-item-swatch {
+  width: 2.25rem;
+  height: 2.25rem;
+  flex-shrink: 0;
+  border-radius: 4px;
+  image-rendering: pixelated;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+}
+
+.shop-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.shop-item-name {
+  font-size: 0.9rem;
+}
+
+.shop-item-detail {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+/* button-purchase.png is a placeholder -- a plain background-image (not
+   an <img>) so a missing/404 asset just silently shows nothing instead of
+   a broken-image glyph, leaving the background-color fallback and the
+   "+" label both still fully usable. */
+.shop-item-buy-more {
+  flex-shrink: 0;
+  width: 3.5rem;
+  height: 1.75rem;
+  border: none;
+  border-radius: 6px;
+  background-color: var(--color-accent);
+  background-size: cover;
+  background-position: center;
+  color: var(--color-text);
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.shop-item-buy-more:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}

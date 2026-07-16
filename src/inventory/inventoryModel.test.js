@@ -10,11 +10,11 @@ import {
 import { ITEM_CATALOG } from './itemCatalog.js';
 
 describe('defaultInventory', () => {
-  it('seeds one entry per catalog item, each with a positive quantity and the shared cap', () => {
+  it('seeds one entry per catalog item, starting unowned with the shared cap', () => {
     const inventory = defaultInventory();
     expect(inventory.map((e) => e.itemId).sort()).toEqual(Object.keys(ITEM_CATALOG).sort());
     for (const entry of inventory) {
-      expect(entry.quantity).toBeGreaterThan(0);
+      expect(entry.quantity).toBe(0);
       expect(entry.cap).toBe(INVENTORY_CAP);
     }
   });

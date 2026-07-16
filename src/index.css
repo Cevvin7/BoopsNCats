@@ -40,6 +40,23 @@
   --color-danger: #c22f4c;
 }
 
+/* Press-and-hold/drag text selection reads as a rendering glitch on a
+   game-like UI made of divs, not a useful affordance -- disabled globally,
+   with the promo code field (the one real text input) explicitly opted
+   back in below since players still need to select/paste into it. */
+* {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.settings-code-input {
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
+}
+
 body {
   margin: 0;
   background: var(--color-bg);
@@ -48,4 +65,25 @@ body {
 
 button {
   font-family: inherit;
+}
+
+.error-boundary {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  height: 100vh;
+  text-align: center;
+  padding: 1rem;
+}
+
+.error-boundary button {
+  font-size: 1rem;
+  padding: 0.6rem 1.2rem;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  background: var(--color-accent);
+  color: var(--color-text);
 }

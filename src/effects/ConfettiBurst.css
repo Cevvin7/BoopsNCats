@@ -1,0 +1,34 @@
+.confetti-burst {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 30;
+}
+
+.confetti-piece {
+  position: absolute;
+  top: 45%;
+  left: 50%;
+  width: 7px;
+  height: 12px;
+  opacity: 0;
+  /* rotate() first sets each piece's own outward direction; the later
+     translateY (applied within that rotated frame) then pushes it along
+     that direction -- that's what spreads the pieces in a radial burst
+     instead of everyone moving straight up. */
+  transform: rotate(var(--angle)) translateY(0);
+  animation: confetti-burst-piece 900ms ease-out forwards;
+  animation-delay: var(--delay);
+}
+
+@keyframes confetti-burst-piece {
+  0% {
+    opacity: 1;
+    transform: rotate(var(--angle)) translateY(0) rotate(0deg);
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(var(--angle)) translateY(-90px) rotate(200deg);
+  }
+}

@@ -140,7 +140,7 @@ function contactYPercent(rect) {
   return rect.region === 'wall' ? rect.topPercent : rect.topPercent + rect.heightPercent;
 }
 
-export function Room({ catHappiness, catNeedsAttention, catWander, placedItems, editMode, roomEditor }) {
+export function Room({ catHappiness, catNeedsAttention, catWander, onBoopCat, placedItems, editMode, roomEditor }) {
   const catSpritePx = CAT_SPRITE_NATIVE_PX * PIXEL_SCALE;
 
   // The cat isn't meant to fill its whole tile -- its sprite sheet frame is
@@ -178,12 +178,14 @@ export function Room({ catHappiness, catNeedsAttention, catWander, placedItems, 
       <div
         key="cat"
         className="room-entity"
+        onClick={onBoopCat}
         style={{
           left: `${catPoint.xPercent}%`,
           bottom: `${100 - catPoint.yPercent}%`,
           width: `${catSpritePx}px`,
           height: `${catSpritePx}px`,
           transform: 'translateX(-50%)',
+          cursor: 'pointer',
         }}
       >
         <CatSprite
