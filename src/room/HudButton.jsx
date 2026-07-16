@@ -17,6 +17,17 @@ export function HudButton({ spriteName, centerX, centerY, active, onTap, label }
   const [isPressed, setIsPressed] = useState(false);
   const showDownFrame = isPressed || active;
 
+  // pointerup fires (and would flip isPressed back to false) a moment
+  // *before* the click event that follows it -- if that click is what
+  // flips `active` on (e.g. opening the inventory), that's a real
+  // in-between render with both isPressed and active false, i.e. a
+  // one-frame flash back to the "up" sprite before it lands on "down"
+  // again. Deferring the reset past the click's own render (a plain
+  // macrotask is enough; click always fires before it) skips that frame.
+  function handlePointerUp() {
+    setTimeout(() => setIsPressed(false), 0);
+  }
+
   return (
     <button
       type="button"
@@ -28,7 +39,7 @@ export function HudButton({ spriteName, centerX, centerY, active, onTap, label }
         backgroundPosition: showDownFrame ? `-${BUTTON_FRAME_WIDTH_PX}px 0` : '0 0',
       }}
       onPointerDown={() => setIsPressed(true)}
-      onPointerUp={() => setIsPressed(false)}
+      onPointerUp={handlePointerUp}
       onPointerLeave={() => setIsPressed(false)}
       onPointerCancel={() => setIsPressed(false)}
       onClick={onTap}

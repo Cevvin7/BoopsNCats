@@ -32,10 +32,18 @@ export function SettingsScreen({ theme, onToggleTheme, onRedeemCode, onFactoryRe
     if (status === RedeemStatus.SUCCESS) setCodeInput('');
   }
 
-  function handleFactoryReset() {
-    if (!window.confirm('Are you sure you want to reset everything?')) return;
-    if (!window.confirm('Your cat will be sad. This cannot be undone.')) return;
-    onFactoryReset();
+  function handleFactoryReset(event) {
+    // window.confirm briefly steals focus away and back -- the button is
+    // left showing its focus/active appearance afterward (visually reads
+    // as "stuck") until something else on the page is tapped. Blurring it
+    // once the whole confirm flow (including the reset itself) is settled
+    // clears that immediately instead of leaving it for the next tap.
+    const button = event.currentTarget;
+    const confirmed =
+      window.confirm('Are you sure you want to reset everything?') &&
+      window.confirm('Your cat will be sad. This cannot be undone.');
+    if (confirmed) onFactoryReset();
+    button.blur();
   }
 
   return (

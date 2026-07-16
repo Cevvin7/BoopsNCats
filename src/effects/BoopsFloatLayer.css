@@ -1,0 +1,39 @@
+.boops-float-layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 30;
+}
+
+.boops-float-text {
+  position: absolute;
+  left: 50%;
+  bottom: 45%;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--hud-accent-color, #f4c94d);
+  text-shadow: 0 2px 3px rgba(0, 0, 0, 0.6);
+  opacity: 0;
+  animation: boops-float-rise 1.2s ease-out forwards;
+}
+
+@keyframes boops-float-rise {
+  0% {
+    transform: translate(-50%, 0);
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  35% {
+    transform: translate(calc(-50% + 14px), -40px);
+  }
+  65% {
+    transform: translate(calc(-50% - 14px), -85px);
+  }
+  100% {
+    transform: translate(-50%, -140px);
+    opacity: 0;
+  }
+}
