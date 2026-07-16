@@ -3,5 +3,6 @@
   "name": "Shelf",
   "placementType": "onWall",
   "footprint": { "width": 1, "height": 1 },
-  "color": "#c9a15a"
+  "color": "#c9a15a",
+  "sprite": "furniture-shelf.png"
 }

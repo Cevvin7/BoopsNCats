@@ -3,5 +3,7 @@
   "name": "Long Shelf",
   "placementType": "onWall",
   "footprint": { "width": 2, "height": 1 },
-  "color": "#c9a15a"
+  "color": "#c9a15a",
+  "sprite": "furniture-shelf-double.png",
+  "spriteHeightPx": 48
 }
