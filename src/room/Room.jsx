@@ -55,14 +55,20 @@ for (let row = 0; row < FLOOR_ROWS; row++) {
   }
 }
 
+// Each wall theme's range is keyed by face (see tiles-wall.json) -- the two
+// walls are meant to read as a matching pair, not literally identical tiles
+// (e.g. one side shaded darker for a consistent light direction), so a
+// "theme" is really two related-but-distinct frame ranges rather than one
+// shared range both faces sample from.
 const WALL_TILES = [];
 for (const face of WALL_FACES) {
+  const faceTheme = { range: activeWallTheme.range[face] };
   for (let row = 0; row < WALL_ROWS; row++) {
     for (let col = 0; col < WALL_COLS; col++) {
       WALL_TILES.push({
         key: `${face}-${row}-${col}`,
         rect: wallCellRect({ face, row, col }),
-        frameIndex: tileVariantIndex(activeWallTheme, row, col),
+        frameIndex: tileVariantIndex(faceTheme, row, col),
       });
     }
   }
